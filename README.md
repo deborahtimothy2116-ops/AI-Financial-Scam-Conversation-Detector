@@ -248,6 +248,16 @@ Instead of only saying "trust" or "don't trust", every scan pulls out the specif
 
 After checking, the user marks the claim **False** (they're offered to report the sender) or **True** (they're told to act only through the official channel). Fourteen claim types are covered: account block, KYC/PAN, prize, parcel held, refund/cashback, power cut, police/court case, SIM block, tax, job, investment, money "sent by mistake", family emergency and loan, including Hindi and Tamil messages. API: `claims` on every analysis (`app/services/claim_verification.py`).
 
+## ✋ Pause Before You Pay
+
+Scams work by rushing people. When a scan is rated **SCAM**, or a number / UPI ID looked up on *Check number / UPI* has been reported by 3 or more users, ScamShield interrupts with a full-screen pause:
+
+- a one-line warning ("This looks like Fake Lottery / Lucky Draw Scam. 2 of the 5 safety checks below fail…");
+- a five-item "before paying, all of these must be true" checklist (I contacted them myself on a known number; I checked the claim through an official source; I'm not paying a fee to receive money; nobody asked for an OTP/PIN or an app install; I'm not being threatened, rushed or told to keep a secret). Items that **this message contradicts** are marked in red with the reason, from the scan's findings and claims;
+- a 10-second cooling-off period. **Don't pay. Stop here.** and **I already paid** (opens incident response with the message filled in) are available at once; **Continue anyway** unlocks only after the wait **and** when every item is ticked.
+
+Each choice is recorded anonymously (`POST /api/v1/pause/events`), and the scan page shows the real totals (`GET /api/v1/pause/stats`: paused / stopped / sent for help). The pause is returned as `pause` on SCAM analyses and on heavily reported lookups (`app/services/pause_check.py`).
+
 ## 📏 Measured Accuracy
 
 `benchmark/` holds labelled messages and an evaluation script:
