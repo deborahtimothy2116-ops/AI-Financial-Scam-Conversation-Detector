@@ -214,6 +214,14 @@ class AnalysisResponse(BaseModel):
 
     @computed_field
     @property
+    def claims(self) -> List[Dict[str, Any]]:
+        """Claims the message makes, each with how to verify it through an official source."""
+        from app.services.claim_verification import extract_claims
+
+        return extract_claims(self.raw_text)
+
+    @computed_field
+    @property
     def link_xray(self) -> List[Dict[str, Any]]:
         """Per-link breakdown of the real destination and the tricks used."""
         from app.services.link_xray import xray_links

@@ -696,6 +696,9 @@ function renderResultView(analysis) {
          No requests for money, OTPs or passwords, no suspicious links, and no pressure or threats were found.</span>
        </td></tr>`;
 
+  // Claims to verify through official sources
+  renderClaims(analysis.claims || []);
+
   // Link analysis
   renderLinkXray(links);
 
@@ -717,6 +720,61 @@ function renderResultView(analysis) {
   ["btn-warn-family", "btn-report-community", "btn-emergency-from-result"].forEach((id) =>
     document.getElementById(id).classList.toggle("hidden", verdict === "SAFE")
   );
+}
+
+// ---------------------------------------------------------------------------
+// Claim verification
+// ---------------------------------------------------------------------------
+function renderClaims(claims) {
+  state.claimOutcomes = {};
+  document.getElementById("result-claims-section").classList.toggle("hidden", claims.length === 0);
+  document.getElementById("result-claims").innerHTML = claims
+    .map((c, i) => {
+      const steps = c.how_to_verify
+        .map((s, n) => `<li class="flex gap-2"><span class="text-on-surface-variant">${n + 1}.</span><span>${escapeHtml(s)}</span></li>`)
+        .join("");
+      const links = c.official_links
+        .map((l) => `<a href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer" class="btn-secondary h-8 text-xs"><span class="material-symbols-outlined text-[16px]">open_in_new</span>${escapeHtml(l.label)}</a>`)
+        .join("");
+      return `
+        <div class="p-5">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="tag tag-neutral">Claim ${i + 1}</span>
+            ${c.claimed_by ? `<span class="text-xs text-on-surface-variant">Claims to be from <strong class="text-on-surface">${escapeHtml(c.claimed_by)}</strong></span>` : ""}
+          </div>
+          <blockquote class="mt-2 pl-3 border-l-2 border-outline-variant text-sm text-on-surface italic">&ldquo;${escapeHtml(c.claim)}&rdquo;</blockquote>
+          <div class="mt-3 text-sm font-semibold text-on-surface">${escapeHtml(c.question)}</div>
+          <ol class="mt-2 space-y-1.5 text-sm text-on-surface">${steps}</ol>
+          ${links ? `<div class="flex flex-wrap gap-2 mt-3">${links}</div>` : ""}
+          <p class="mt-3 text-xs text-on-surface-variant flex gap-1.5"><span class="material-symbols-outlined text-[16px] text-primary">info</span><span>${escapeHtml(c.fact)}</span></p>
+          <div class="mt-3 pt-3 border-t border-outline-variant flex flex-wrap items-center gap-2 text-xs">
+            <span class="text-on-surface-variant">After checking, this claim was:</span>
+            <button onclick="setClaimOutcome(${i}, 'false')" id="claim-${i}-false" class="btn-ghost border border-outline-variant">False</button>
+            <button onclick="setClaimOutcome(${i}, 'true')" id="claim-${i}-true" class="btn-ghost border border-outline-variant">True</button>
+          </div>
+          <div id="claim-${i}-note" class="hidden mt-2 text-xs rounded-md p-3"></div>
+        </div>`;
+    })
+    .join("");
+}
+
+function setClaimOutcome(index, outcome) {
+  state.claimOutcomes[index] = outcome;
+  ["false", "true"].forEach((o) => {
+    const btn = document.getElementById(`claim-${index}-${o}`);
+    btn.classList.toggle("bg-primary-fixed", o === outcome);
+    btn.classList.toggle("text-primary", o === outcome);
+  });
+  const note = document.getElementById(`claim-${index}-note`);
+  note.classList.remove("hidden");
+  if (outcome === "false") {
+    note.className = "mt-2 text-xs rounded-md p-3 bg-error-container text-on-error-container";
+    note.innerHTML = `The official source says this isn't true, so the message is lying to you. Don't reply or pay.
+      <button onclick="reportFromCurrentAnalysis()" class="link-btn ml-1">Report the sender</button> so others are warned.`;
+  } else {
+    note.className = "mt-2 text-xs rounded-md p-3 bg-primary-fixed text-primary";
+    note.textContent = "If the official source confirms it, deal with it only through that official app, website or branch, never through the message's link or number.";
+  }
 }
 
 // ---------------------------------------------------------------------------
