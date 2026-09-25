@@ -236,6 +236,18 @@ Checks behind it, besides the scam-pattern rules (KYC, lottery, QR, OTP, remote 
 - **Share to ScamShield** (installable web app): on Android, add ScamShield to the home screen and it appears in the Share menu of WhatsApp, Messages and Gallery. Sharing a message or screenshot opens ScamShield and scans it straight away, with no copying and pasting. Implemented with a web app manifest `share_target` and a service worker (`frontend/manifest.webmanifest`, `frontend/sw.js`).
 - **Hindi, Hinglish, Tamil and Tanglish**: native-language scam words (e.g. खाता बंद, तुरंत, ओटीपी बताएं, khata band, OTP batao, முடக்கப்படும், உடனே) are recognised and highlighted, so scams written entirely in these languages are caught (`app/services/multilingual.py`).
 
+## 🔎 Claim Verification
+
+Instead of only saying "trust" or "don't trust", every scan pulls out the specific claims the message makes (e.g. *"Your SBI account will be blocked today"*, *"A parcel containing drugs was found in your name"*, *"I sent Rs 5,000 to your number by mistake"*) and shows, for each one:
+
+- who it claims to be from;
+- the question to answer ("Is your account really going to be blocked?");
+- how to check independently: the official app, net banking, the number printed on your card, your branch, 112 / a police station, the courier's own tracking page, the Income Tax portal, SEBI's register;
+- links to the organisation's **official website from ScamShield's own list, never a link from the message**;
+- a key fact (e.g. "There is no 'digital arrest' in Indian law").
+
+After checking, the user marks the claim **False** (they're offered to report the sender) or **True** (they're told to act only through the official channel). Fourteen claim types are covered: account block, KYC/PAN, prize, parcel held, refund/cashback, power cut, police/court case, SIM block, tax, job, investment, money "sent by mistake", family emergency and loan, including Hindi and Tamil messages. API: `claims` on every analysis (`app/services/claim_verification.py`).
+
 ## 📏 Measured Accuracy
 
 `benchmark/` holds labelled messages and an evaluation script:
