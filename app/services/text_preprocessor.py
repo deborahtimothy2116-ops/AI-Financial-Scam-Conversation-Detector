@@ -1,6 +1,7 @@
 """Text Preprocessing, Obfuscation Normalization, and Entity Extraction."""
 
 import re
+from urllib.parse import urlparse
 import unicodedata
 from typing import Any, Dict, List, Set
 from app.utils.constants import REGEX_PATTERNS, SUSPICIOUS_TLDS
@@ -75,11 +76,11 @@ class TextPreprocessor:
             if REGEX_PATTERNS["shortened_url"].match(u_clean):
                 suspicious_shorteners.add(u_clean)
 
-            # Check for suspicious TLDs
-            for tld in SUSPICIOUS_TLDS:
-                if tld in u_clean.lower():
-                    suspicious_tld_urls.add(u_clean)
-                    break
+            # Check for suspicious TLDs (match the host's ending, not any substring:
+            # "onlinesbi.sbi" must not match ".online")
+            host = (urlparse(u_clean).hostname or "").lower()
+            if any(host.endswith(tld) for tld in SUSPICIOUS_TLDS):
+                suspicious_tld_urls.add(u_clean)
 
         # 2. IP URLs
         ip_urls = set(REGEX_PATTERNS["ip_url"].findall(cleaned))

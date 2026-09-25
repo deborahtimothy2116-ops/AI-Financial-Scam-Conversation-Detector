@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel, Field, ConfigDict, model_validator
+from pydantic import BaseModel, Field, ConfigDict, computed_field, model_validator
 from app.utils.constants import ScamCategory, RiskLevel, IndicatorSeverity, InputSource
 
 
@@ -130,6 +130,22 @@ class StructuredRecommendation(BaseModel):
     text: str
 
 
+VERDICT_LABELS = {
+    "SAFE": "SAFE – No obvious suspicious indicators found.",
+    "SUSPICIOUS": "SUSPICIOUS – Some warning signs found. Verify the sender through an official channel before acting.",
+    "SCAM": "SCAM – Strong signs of phishing, fraud or fake content. Do not reply, click, pay or share details.",
+}
+
+
+def verdict_for_score(risk_score: float) -> str:
+    """Map a 0-100 risk score onto the SAFE / SUSPICIOUS / SCAM verdict (same bands as LOW / MEDIUM / HIGH+)."""
+    if risk_score >= 60.0:
+        return "SCAM"
+    if risk_score >= 30.0:
+        return "SUSPICIOUS"
+    return "SAFE"
+
+
 class AnalysisResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -176,6 +192,17 @@ class AnalysisResponse(BaseModel):
     analysis_mode: str = "ai_plus_rules"
     processing_time_ms: float = 0.0
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    @computed_field
+    @property
+    def verdict(self) -> str:
+        """Plain three-way classification: SAFE, SUSPICIOUS or SCAM."""
+        return verdict_for_score(self.risk_score)
+
+    @computed_field
+    @property
+    def verdict_label(self) -> str:
+        return VERDICT_LABELS[self.verdict]
 
     @model_validator(mode="before")
     @classmethod

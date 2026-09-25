@@ -587,8 +587,10 @@ function renderResultView(analysis) {
 
   const score = Math.round(analysis.risk ? analysis.risk.score : (analysis.risk_score || 0));
   const level = (analysis.risk ? analysis.risk.level : (analysis.risk_level || "LOW")).toUpperCase();
-  const isHigh = level === "CRITICAL" || level === "HIGH" || score >= 60;
-  const isMed = level === "MEDIUM" || (score >= 30 && score < 60);
+  // Server verdict: SAFE / SUSPICIOUS / SCAM (older records fall back to the risk level)
+  const verdict = analysis.verdict || (score >= 60 ? "SCAM" : score >= 30 ? "SUSPICIOUS" : "SAFE");
+  const isHigh = verdict === "SCAM";
+  const isMed = verdict === "SUSPICIOUS";
   const isLow = !isHigh && !isMed;
 
   // Banner configuration
@@ -619,7 +621,7 @@ function renderResultView(analysis) {
     bannerDesc.textContent = t.highRiskDesc;
     bannerIcon.textContent = "warning";
     verdictBadge.className = "px-3 py-1 rounded-full bg-error text-on-error text-xs font-bold tracking-wide shadow-sm flex items-center gap-1.5";
-    verdictText.textContent = level === "CRITICAL" ? "CRITICAL RISK" : "HIGH RISK";
+    verdictText.textContent = "SCAM";
     scoreNumber.className = "font-display text-4xl font-extrabold text-error leading-none tracking-tight";
     gaugeFill.className = "text-error transition-all duration-1000 ease-out";
   } else if (isMed) {
@@ -630,7 +632,7 @@ function renderResultView(analysis) {
     bannerDesc.textContent = t.medRiskDesc;
     bannerIcon.textContent = "gpp_maybe";
     verdictBadge.className = "px-3 py-1 rounded-full bg-amber-500 text-amber-950 text-xs font-bold tracking-wide shadow-sm flex items-center gap-1.5";
-    verdictText.textContent = "MEDIUM CAUTION";
+    verdictText.textContent = "SUSPICIOUS";
     scoreNumber.className = "font-display text-4xl font-extrabold text-amber-600 leading-none tracking-tight";
     gaugeFill.className = "text-amber-500 transition-all duration-1000 ease-out";
   } else {
@@ -641,7 +643,7 @@ function renderResultView(analysis) {
     bannerDesc.textContent = t.lowRiskDesc;
     bannerIcon.textContent = "verified_user";
     verdictBadge.className = "px-3 py-1 rounded-full bg-tertiary-container text-on-tertiary-container text-xs font-bold tracking-wide shadow-sm flex items-center gap-1.5";
-    verdictText.textContent = "VERIFIED SAFE / LOW";
+    verdictText.textContent = "SAFE";
     scoreNumber.className = "font-display text-4xl font-extrabold text-tertiary leading-none tracking-tight";
     gaugeFill.className = "text-tertiary transition-all duration-1000 ease-out";
   }
@@ -687,7 +689,8 @@ function renderResultView(analysis) {
   // Explanation
   const explanationBox = document.getElementById("result-explanation-box");
   explanationBox.textContent = analysis.explanation || "No suspicious deception tactics were detected.";
-  document.getElementById("result-quick-summary").textContent = analysis.explanation ? analysis.explanation.split("\n")[0] : "";
+  document.getElementById("result-quick-summary").textContent =
+    analysis.verdict_label || (analysis.explanation ? analysis.explanation.split("\n")[0] : "");
 
   // Recommendations
   const recsContainer = document.getElementById("result-recommendations-list");

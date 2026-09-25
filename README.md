@@ -202,6 +202,24 @@ All endpoints are documented via Swagger UI at `/docs` or ReDoc at `/redoc`.
 
 ---
 
+## ✅ Verdict: SAFE / SUSPICIOUS / SCAM
+
+Every result carries a plain three-way `verdict` (and a one-line `verdict_label`), shown as the badge on the result screen:
+
+| Verdict | Risk score | Meaning |
+|---|---|---|
+| `SAFE` | 0 – 29 | No obvious suspicious indicators found. |
+| `SUSPICIOUS` | 30 – 59 | Some warning signs found. Verify the sender through an official channel before acting. |
+| `SCAM` | 60 – 100 | Strong signs of phishing, fraud or fake content. Do not reply, click, pay or share details. |
+
+Checks behind it, besides the scam-pattern rules (KYC, lottery, QR, OTP, remote access, investment, job tasks, authority threats):
+- **Sender / link mismatch**: a message naming a bank, company or government body (SBI, HDFC, Amazon, Income Tax, FedEx…) whose link or email is not on that organisation's official domain, including lookalikes such as `amaz0n-orders.shop`.
+- **Free email senders**: an organisation writing from `@gmail.com`, `@yahoo.com` and similar.
+- **Unverified contact numbers**: "call/WhatsApp this number" attached to a brand or authority claim.
+- **Requests for money or bank/card details**.
+- **Urgency, deadlines and threats** ("within 2 hours", "final notice", "will be suspended", penalties).
+- **Writing style**: common phishing misspellings, generic greetings ("Dear Customer") and shouting in capitals or `!!!`.
+
 ## 🧠 Risk Scoring Engine Formula
 
 The Risk Engine combines signals to eliminate false negatives:
@@ -240,7 +258,7 @@ pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 ```
 
-> Screenshot scanning needs the Tesseract binary (`apt install tesseract-ocr tesseract-ocr-tam`, or the Windows installer). Without it, text analysis still works and `/health` reports `ocr_engine_ready: false`.
+> Screenshot scanning needs a text reader (OCR). **On Windows** nothing extra is needed: `requirements.txt` installs `winocr`, which uses the OCR built into Windows 10/11. **On Linux/macOS** install Tesseract (`apt install tesseract-ocr tesseract-ocr-tam` / `brew install tesseract`). Without one, text analysis still works, `/health` reports `ocr_engine_ready: false`, and screenshot uploads explain what to install.
 
 ### 3. Configure Environment Variables
 ```bash
