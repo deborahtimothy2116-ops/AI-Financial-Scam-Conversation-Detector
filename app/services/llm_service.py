@@ -8,8 +8,71 @@ import httpx
 from app.core.config import settings
 from app.core.logging import logger
 from app.core.exceptions import LLMServiceError
+from app.services.link_xray import xray_links
 from app.services.message_checks import run_message_checks
+from app.services.multilingual import english_cues
 from app.utils.constants import ScamCategory, IndicatorSeverity, REGEX_PATTERNS
+
+AUTHORITY_THREAT = re.compile(
+    r"\b(?:arrest\w*|warrant|legal action|summons|fir|case (?:is )?(?:registered|filed)|penalty|fine|"
+    r"disconnect\w*|power cut|block\w*|suspend\w*|seiz\w*|jail)\b",
+    re.IGNORECASE,
+)
+AUTHORITY_DEMAND = re.compile(r"\b(?:pay|payment|transfer|fee|charges?|deposit)\b", re.IGNORECASE)
+URGENCY_WORDS = re.compile(r"\b(?:immediately|urgent\w*|tonight|today|within \d+\s*\w*|last chance|right now)\b", re.IGNORECASE)
+
+# Genuine bank / OTP messages warn "do not share your OTP" or "we never ask for your PIN".
+# Remove those warnings before looking for a request for credentials.
+PROTECTIVE_PHRASE = re.compile(
+    r"\b(?:do not|don'?t|dont|never|not to|please do not|pls do not)\s+(?:share|disclose|tell|give|reveal|forward)\b[^.\n]*"
+    r"|\b(?:never|will never|does not|doesn'?t|do not|don'?t)\s+(?:ask|call|request|asks)\w*\b[^.\n]*",
+    re.IGNORECASE,
+)
+CREDENTIAL_WORD = re.compile(
+    r"\b(?:otp|one time password|upi pin|m?pin|cvv|password|passcode|"
+    r"(?:verification|security|secret|login|\d[- ]?digit)\s+code|code\s+(?:sent|received))\b",
+    re.IGNORECASE,
+)
+# A message that *delivers* an OTP ("482913 is your OTP", "use 918273 as your one time password")
+# only counts as a request if it explicitly asks you to share, tell or give it to someone.
+OTP_DELIVERY = re.compile(
+    r"\b\d{4,8}\s+is\s+your\b|\b(?:otp|code|password)\s+(?:is|:)\s*\d{4,8}\b|\buse\s+\d{4,8}\s+as\s+your\b",
+    re.IGNORECASE,
+)
+STRONG_CREDENTIAL_ASK = re.compile(r"\b(?:share|tell|give|forward|reply with|provide)\b", re.IGNORECASE)
+CREDENTIAL_ASK = re.compile(r"\b(?:share|send|tell|give|provide|enter|verify|confirm|forward|reply with)\b", re.IGNORECASE)
+KYC_TERM = re.compile(r"\b(?:kyc|pan card|pan|aadhaar|sim)\b", re.IGNORECASE)
+KYC_ACTION = re.compile(r"\b(?:update\w*|block\w*|expir\w*|suspend\w*|deactivat\w*)\b", re.IGNORECASE)
+CONTACT_ACTION = re.compile(r"\b(?:call|whatsapp|contact|dial)\b", re.IGNORECASE)
+
+
+def without_protective(text: str) -> str:
+    return PROTECTIVE_PHRASE.sub(" ", text)
+
+
+def has_call_to_action(text: str) -> bool:
+    """Scam notices push you to act now: an unofficial link, a number to call, a payment,
+    a credential request or a deadline. Genuine notices ("visit your branch") usually don't."""
+    if any(r["risk"] != "safe" for r in xray_links(text)):
+        return True
+    if CONTACT_ACTION.search(text) and re.search(r"\d{5}\s?\d{5}|\+\d{2}", text):
+        return True
+    if AUTHORITY_DEMAND.search(text) or URGENCY_WORDS.search(text):
+        return True
+    return bool(CREDENTIAL_WORD.search(text) and CREDENTIAL_ASK.search(text))
+
+DIGITAL_ARREST_AUTHORITY = re.compile(
+    r"\b(?:cbi|police|customs|narcotics|ncb|enforcement directorate|\bed officer|trai|cyber\s*crime|crime branch|"
+    r"interpol|income tax officer|rbi officer|court)\b",
+    re.IGNORECASE,
+)
+DIGITAL_ARREST_TACTIC = re.compile(
+    r"digital(?:ly)? arrest|arrest warrant|video call|skype|stay on (?:the )?(?:video )?call|do not (?:disconnect|tell)|"
+    r"don'?t (?:disconnect|tell)|keep (?:this|it) (?:confidential|secret)|parcel (?:containing|with|has)|"
+    r"(?:drugs|narcotics|mdma|fake passports?) (?:found|in your)|money laundering|"
+    r"(?:verification|safe|secure|rbi) account|transfer (?:all )?(?:your )?(?:money|funds|savings) for verification",
+    re.IGNORECASE,
+)
 
 URGENCY_PHRASES = [
     "immediately", "within 15 minutes", "within 24 hours", "within 2 hours", "within 1 hour",
@@ -85,6 +148,9 @@ class RuleBasedFallbackProvider(BaseLLMProvider):
         self, text: str, extracted_entities: Dict[str, Any], language: str
     ) -> Dict[str, Any]:
         logger.info("Executing rule-based heuristic scam analysis engine.")
+        # Add English equivalents of Hindi / Hinglish / Tamil / Tanglish scam words so the rules see them.
+        cues = english_cues(text)
+        text = f"{text} {cues}" if cues else text
         cleaned = text.lower()
 
         indicators: List[Dict[str, Any]] = []
@@ -112,9 +178,10 @@ class RuleBasedFallbackProvider(BaseLLMProvider):
             detected_category = ScamCategory.UPI_QR_SCAM
 
         # 2. Check for OTP / PIN / CVV credential harvesting
-        if REGEX_PATTERNS["otp_pin_request"].search(cleaned) or (
-            ("otp" in cleaned or "pin" in cleaned or "password" in cleaned or "cvv" in cleaned)
-            and ("share" in cleaned or "send" in cleaned or "verify" in cleaned or "tell" in cleaned)
+        asking = without_protective(cleaned)
+        ask_verbs = STRONG_CREDENTIAL_ASK if OTP_DELIVERY.search(asking) else CREDENTIAL_ASK
+        if (not OTP_DELIVERY.search(asking) and REGEX_PATTERNS["otp_pin_request"].search(asking)) or (
+            CREDENTIAL_WORD.search(asking) and ask_verbs.search(asking)
         ):
             indicators.append({
                 "title": "Confidential Security Credential Solicitation",
@@ -198,9 +265,10 @@ class RuleBasedFallbackProvider(BaseLLMProvider):
                 detected_category = ScamCategory.INVESTMENT_CRYPTO_PONZI
 
         # 7. Check for KYC / Account Expiry Phishing
-        if REGEX_PATTERNS["kyc_block_threat"].search(cleaned) or (
-            ("kyc" in cleaned or "pan" in cleaned or "sim" in cleaned) and ("block" in cleaned or "expire" in cleaned or "update" in cleaned)
-        ):
+        if (
+            REGEX_PATTERNS["kyc_block_threat"].search(cleaned)
+            or (KYC_TERM.search(cleaned) and KYC_ACTION.search(cleaned))
+        ) and has_call_to_action(without_protective(cleaned)):
             indicators.append({
                 "title": "Deceptive KYC / Account Suspension Threat",
                 "description": "Claims your bank account, PAN card, or SIM will be permanently blocked unless you update KYC immediately via an unverified link.",
@@ -215,7 +283,12 @@ class RuleBasedFallbackProvider(BaseLLMProvider):
                 detected_category = ScamCategory.PHISHING_CREDENTIAL_HARVESTING
 
         # 8. Check for Authority Impersonation & Coercive Threats (unless it's an advance fee prize pretext)
-        if REGEX_PATTERNS["threat_authority"].search(cleaned) and detected_category != ScamCategory.LOTTERY_PRIZE_SCAM:
+        # Mentioning police/customs/etc. is not a threat by itself ("police found my wallet"), so also require a threat or demand.
+        if (
+            REGEX_PATTERNS["threat_authority"].search(cleaned)
+            and (AUTHORITY_THREAT.search(cleaned) or (AUTHORITY_DEMAND.search(cleaned) and URGENCY_WORDS.search(cleaned)))
+            and detected_category != ScamCategory.LOTTERY_PRIZE_SCAM
+        ):
             indicators.append({
                 "title": "Authority Coercion & Intimidation Tactic",
                 "description": "Impersonating law enforcement (Police, CBI, Cyber Cell, RBI) or utility providers with threats of immediate arrest or power disconnection.",
@@ -229,6 +302,23 @@ class RuleBasedFallbackProvider(BaseLLMProvider):
             if detected_category == ScamCategory.SAFE_NORMAL_CONVERSATION:
                 detected_category = ScamCategory.URGENT_IMPERSONATION
 
+
+        # 8b. "Digital arrest": fake police/CBI/customs threatening arrest over a video call
+        if DIGITAL_ARREST_AUTHORITY.search(cleaned) and DIGITAL_ARREST_TACTIC.search(cleaned):
+            indicators.append({
+                "title": "Digital Arrest / Fake Police Call Scam",
+                "description": "Someone posing as police, CBI, customs or another agency threatens arrest over a call or video call "
+                               "(often about a 'parcel with drugs' or 'money laundering'), tells you to stay on the call and keep it secret, "
+                               "and demands money for 'verification'. There is no such thing as a 'digital arrest': real agencies never "
+                               "question or arrest anyone over video call or ask for money. Hang up and call 1930.",
+                "severity": IndicatorSeverity.CRITICAL.value,
+                "confidence": 0.96,
+                "snippet": (DIGITAL_ARREST_TACTIC.search(cleaned).group(0))[:80],
+                "rule_id": "RULE_DIGITAL_ARREST",
+            })
+            coercion_risk = max(coercion_risk, 98.0)
+            urgency_score = max(urgency_score, 90.0)
+            detected_category = ScamCategory.URGENT_IMPERSONATION
 
         # 9. Suspicious URL Shorteners & Phishing Links
         if extracted_entities.get("suspicious_shorteners") or extracted_entities.get("suspicious_tld_urls"):
@@ -267,7 +357,25 @@ class RuleBasedFallbackProvider(BaseLLMProvider):
         if detected_category == ScamCategory.SAFE_NORMAL_CONVERSATION and checks.category_hint:
             detected_category = checks.category_hint
 
-        # 12. Urgency, deadline and threat keywords check
+        # 12. Link X-ray: structural link tricks (hidden destination, homoglyphs, brand in subdomain, raw IP)
+        deceptive_codes = {"USERINFO_TRICK", "PUNYCODE", "HOMOGLYPH", "BRAND_IN_SUBDOMAIN", "RAW_IP"}
+        for report in xray_links(text):
+            tricks = [f for f in report["flags"] if f["code"] in deceptive_codes]
+            if tricks:
+                indicators.append({
+                    "title": "Deceptive Link Structure",
+                    "description": f"{tricks[0]['title']}: {tricks[0]['detail']}",
+                    "severity": IndicatorSeverity.CRITICAL.value,
+                    "confidence": 0.95,
+                    "snippet": report["link"][:80],
+                    "rule_id": "RULE_DECEPTIVE_LINK",
+                })
+                link_obfuscation_risk = max(link_obfuscation_risk, 98.0)
+                if detected_category == ScamCategory.SAFE_NORMAL_CONVERSATION:
+                    detected_category = ScamCategory.PHISHING_CREDENTIAL_HARVESTING
+                break
+
+        # 13. Urgency, deadline and threat keywords check
         if any(w in cleaned for w in URGENCY_PHRASES):
             urgency_score = max(urgency_score, 75.0)
             if not any(i["rule_id"] == "RULE_FALSE_URGENCY" for i in indicators):

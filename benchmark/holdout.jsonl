@@ -1,0 +1,30 @@
+{"id": "hs01", "label": "scam", "type": "kyc", "message": "Attention: your Bank of Baroda account is temporarily restricted. Re-verify your details within 6 hrs using bob-verify-secure.site"}
+{"id": "hs02", "label": "scam", "type": "otp", "message": "This is from Axis Bank fraud team, a suspicious transaction is happening. Read out the code you got by SMS so we can block it."}
+{"id": "hs03", "label": "scam", "type": "prize", "message": "You are the lucky winner of a Tata Safari in our anniversary contest! Deposit Rs 9,999 registration amount to receive the car."}
+{"id": "hs04", "label": "scam", "type": "job", "message": "Earn from home! Rate hotels on Google Maps, get Rs 150 per review. Prepaid tasks give 30% extra, start with Rs 500."}
+{"id": "hs05", "label": "scam", "type": "invest", "message": "Exclusive IPO allotment for our members, assured 3x listing gains. Transfer Rs 25,000 today to reserve your shares."}
+{"id": "hs06", "label": "scam", "type": "arrest", "message": "FedEx customer care: a package in your name containing illegal passports was intercepted. We are transferring your call to Mumbai police."}
+{"id": "hs07", "label": "scam", "type": "arrest", "message": "This is from the court. A non-bailable warrant is issued in your name. Pay the settlement amount immediately to cancel it."}
+{"id": "hs08", "label": "scam", "type": "remote", "message": "Your broadband will stop working. Install the TeamViewer app so our engineer can fix the router settings remotely."}
+{"id": "hs09", "label": "scam", "type": "refund", "message": "Hello, your electricity overpayment refund of Rs 1,180 is ready. Kindly share your UPI PIN to receive the refund."}
+{"id": "hs10", "label": "scam", "type": "family", "message": "Uncle, it's Arjun. I'm stuck at the airport and my card isn't working. Can you send Rs 8,000 to my friend's UPI arjun.pay@okaxis right now?"}
+{"id": "hs11", "label": "scam", "type": "delivery", "message": "DTDC: Your shipment is on hold due to unpaid duty. Clear Rs 29 at dtdc-parcel-help.shop within 24 hours."}
+{"id": "hs12", "label": "scam", "type": "phish", "message": "Your Google Pay account has been limited. Verify your identity at gpay-secure-verify.com to restore access."}
+{"id": "hs13", "label": "scam", "type": "loan", "message": "Pre-approved personal loan of Rs 5 lakh at 0% interest! Pay Rs 999 file charge now and get instant disbursal."}
+{"id": "hs14", "label": "scam", "type": "hindi", "message": "प्रिय ग्राहक, आपका पैन कार्ड ब्लॉक हो जाएगा। तुरंत अपडेट करें: pan-update-hindi.online"}
+{"id": "hs15", "label": "scam", "type": "hinglish", "message": "Sir aapka SIM band ho jayega aaj raat. Turant is number pe call karo: 9012345678"}
+{"id": "hs16", "label": "scam", "type": "tamil", "message": "உங்கள் மின் இணைப்பு இன்று இரவு துண்டிக்கப்படும். உடனே 9123456789 அழைக்கவும்."}
+{"id": "hl01", "label": "legit", "type": "otp", "message": "Dear customer, 736521 is the OTP for your Axis Bank netbanking login. OTP valid for 5 min. Please do not share with anyone."}
+{"id": "hl02", "label": "legit", "type": "bank", "message": "Your a/c no. XXXXXXXX7788 is credited by Rs.2,000.00 on 22-09-2026 by a/c linked to mobile 98XXXXXX10 (IMPS Ref no 626512345678)."}
+{"id": "hl03", "label": "legit", "type": "bank", "message": "Your cheque no 004512 for Rs 15,000 has been cleared. -Canara Bank"}
+{"id": "hl04", "label": "legit", "type": "bank", "message": "Minimum balance of Rs 3,000 not maintained in your savings account this quarter. Charges may apply. -Federal Bank"}
+{"id": "hl05", "label": "legit", "type": "bill", "message": "Reminder: Your BESCOM bill of Rs 712 is due on 02-Oct-2026. Pay via BESCOM website or any UPI app."}
+{"id": "hl06", "label": "legit", "type": "delivery", "message": "Your Meesho order has been shipped and will arrive by 29 Sep. Track in the Meesho app."}
+{"id": "hl07", "label": "legit", "type": "delivery", "message": "Blue Dart: Shipment 71234567890 delivered to reception at 11:42."}
+{"id": "hl08", "label": "legit", "type": "travel", "message": "Ola: Your ride with Suresh (KA01AB1234) is arriving in 3 mins. OTP for ride 4821."}
+{"id": "hl09", "label": "legit", "type": "gov", "message": "Your EPF passbook has been updated with contribution for August 2026. Check on the EPFO portal or UMANG app."}
+{"id": "hl10", "label": "legit", "type": "personal", "message": "Sorry I missed your call, I was driving. Will call back in 10 minutes."}
+{"id": "hl11", "label": "legit", "type": "personal", "message": "Grandma's surgery went well, she is resting now. Visiting hours are 4 to 6 pm."}
+{"id": "hl12", "label": "legit", "type": "personal", "message": "Pay me back whenever you can, no rush for the 200."}
+{"id": "hl13", "label": "legit", "type": "work", "message": "Interview scheduled for Monday 10 am at our Whitefield office. Please bring your resume and ID."}
+{"id": "hl14", "label": "legit", "type": "hindi", "message": "बेटा, खाना खा लिया? फोन करना जब फ्री हो।"}

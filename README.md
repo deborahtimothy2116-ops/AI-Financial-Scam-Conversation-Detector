@@ -25,23 +25,18 @@ ScamShield AI provides real-time, explainable fraud intelligence:
 
 ---
 
-## 🎨 Google Stitch Frontend Integration
+## 🖥️ Using the App
 
-The user interface was designed in **Google Stitch** (Project ID: `2517293446067344339`) and serves as the visual and interaction source of truth.
+The web app (served at `/`) uses a clean enterprise layout: a dark top bar, a left navigation sidebar (a tab bar on phones), white panels, data tables and colour used only for status (red = scam, orange = suspicious, green = safe).
 
-### Integrated Stitch Screens:
-- **Home Dashboard (`home.html`)**: Live threat banner, neural radar telemetry simulation, quick analyzer tabs, metrics counter, and pre-built judge demo cards.
-- **Analyze Message (`analyze_message.html`)**: Text input area with PII sanitization status, demo pre-fill triggers, language selectors (`Auto`, `English`, `தமிழ்`), and evaluation telemetry.
-- **Upload Screenshot (`upload_screenshot.html`)**: Drag-and-drop OCR dropzone, file type/size validation, and multi-format parser (`PNG`, `JPG`, `WEBP`).
-- **Analysis Processing (`processing.html`)**: Animated radial progress dial with sequential 5-step pipeline loading.
-- **Dynamic Result Verdict Cards (`result_high.html`, `result_medium.html`, `result_low.html`)**:
-  - `HIGH / CRITICAL Risk`: Red-tier alert banner, radial 0–100 risk gauge, extracted trigger chips, and instant **Helpline 1930** button.
-  - `MEDIUM Risk`: Amber caution banner, warning badges, and sender verification guidelines.
-  - `LOW / SAFE Risk`: Emerald clean status with safe hygiene recommendations.
-- **Scan History (`history.html` & `history_detail.html`)**: Filterable timeline (All, High, Medium, Low), live search, per-user data isolation, and report inspection.
-- **Settings & Privacy (`settings.html`)**: Model status, OCR configuration, API base URL override, and privacy toggles.
+- **Scan a message**: paste a message (or switch to the *Screenshot* tab) and press **Scan**. A scanner window sweeps a beam over the message or screenshot while each check is ticked off; when it finishes, the warning signs light up on the text.
+- **Scan result**: a record page with the verdict tag and four key figures (verdict, risk score, warning signs, links checked), the message with highlights, a **Findings** table (severity + explanation), a **Link analysis** table (real destination, status, tricks used), **Recommended actions** and the classification. Risky results offer **I already paid**, **Warn family** and **Report scammer**.
+- **Check number / UPI**: look up a phone number, UPI ID, website or email before paying, and report scammers.
+- **Incident response** (also the red **Report an incident** button): the action plan and complaint draft.
+- **Scan history**: a filterable table of your scans (when signed in).
+- **Awareness training**: the spot-the-scam quiz.
 
----
+The original Google Stitch screen exports are kept in `frontend_screens/` for design reference only; the app doesn't use them.
 
 ## 🏗️ Architecture & Clean Code Structure
 
@@ -87,7 +82,7 @@ AI-Financial-Scam-Conversation-Detector/
 │       ├── constants.py            # Scam categories, risk levels, regex patterns
 │       └── validators.py           # Text & image upload validation
 ├── frontend/
-│   ├── index.html                  # Single Page Application matching Stitch UI
+│   ├── index.html                  # Single-page app: Scan, Result, Check UPI, Quiz, History, Emergency
 │   ├── app.js                      # Vanilla JS API Client & controller
 │   ├── tailwind.css                # Compiled Tailwind stylesheet (no CDN needed)
 │   └── tailwind.config.js          # Design tokens from the Stitch screens
@@ -219,6 +214,46 @@ Checks behind it, besides the scam-pattern rules (KYC, lottery, QR, OTP, remote 
 - **Requests for money or bank/card details**.
 - **Urgency, deadlines and threats** ("within 2 hours", "final notice", "will be suspended", penalties).
 - **Writing style**: common phishing misspellings, generic greetings ("Dear Customer") and shouting in capitals or `!!!`.
+
+## 🧪 Extra Features
+
+- **🖍️ Red-flag highlighter**: the original message is shown with each suspicious phrase highlighted by severity (danger / warning / worth checking / official link). Hover or tap a highlight to see why it was flagged. API: `highlights` on every analysis.
+- **🔬 Link X-ray**: every link is dissected offline (never opened) to show where it *really* goes and which trick it uses: the `@` trick (`sbi.co.in@evil.xyz`), a brand placed in front of another domain (`sbi.co.in.verify-kyc.xyz`), look-alike letters from other alphabets (Cyrillic `а` in `pаypal.com`) and punycode, lookalike spellings (`amaz0n`), link shorteners, raw IP addresses, risky domain endings, plain http and login/KYC bait in the path. Official domains are marked as verified. API: `link_xray` on every analysis. Deceptive link structures also raise the risk score.
+- **🎯 Spot-the-Scam quiz**: a practice mode with realistic SMS, WhatsApp and email messages. Guess SAFE / SUSPICIOUS / SCAM, then see the highlighted red flags and a one-line lesson. API: `GET /api/v1/quiz/questions`, `POST /api/v1/quiz/answer`. A test checks that the detector agrees with every quiz answer.
+- **👪 Warn family on WhatsApp**: on a SUSPICIOUS or SCAM result, one tap opens WhatsApp with a ready-written warning (verdict, red flags, the 1930 helpline). Links in the quoted message are defanged (`hxxps://evil[.]xyz`) so sharing the warning never spreads the scam link.
+
+## 🆘 Real-World Help
+
+- **"Scammed? Get help" emergency mode**: pick what happened (UPI payment, card, OTP shared, remote-access app, "digital arrest" call, investment app…) and get a tailored action plan, ordered DO NOW / TODAY / NEXT DAYS: call **1930** within the golden hour, block card/UPI through the bank's official number and report within 3 working days (RBI limits customer liability for promptly reported unauthorised electronic transactions), file at **cybercrime.gov.in**, report the number on **Sanchar Saathi (Chakshu)**, escalate to the **RBI Ombudsman** after 30 days, and beware of "recovery" scams. Progress is saved on the device.
+- **Complaint draft generator**: fill in what you know (amount, date/time, UTR, bank) and paste the scammer's message; ScamShield writes a complaint for 1930 / cybercrime.gov.in / your bank, with the scammer's phone numbers, UPI IDs, links and emails extracted automatically and links defanged. Copy or download it as a `.txt`. Nothing is sent anywhere. API: `GET /api/v1/emergency/guide`, `POST /api/v1/emergency/complaint-draft`.
+- **Check before you pay (community reports)**: look up any phone number, UPI ID, website or email to see whether other users reported it (`GET /api/v1/community/lookup?q=`). Logged-in users can report one (`POST /api/v1/community/reports`) or report every detail from a scam scan in one tap (`POST /api/v1/community/reports/from-analysis/{id}`). Every scan checks the message against reports: 1–2 reports make it at least SUSPICIOUS, 3+ make it SCAM. Safeguards: login required, one report per user per identifier, official brand domains and link shorteners can't be reported, and results always say reports are unverified.
+- **Digital-arrest scam detection**: flags fake police / CBI / customs calls that threaten "digital arrest", demand secrecy and a "verification" transfer, with advice that no agency arrests anyone over video call.
+
+## 📞 Beyond Messages: Calls, Payments, Sharing and Indian Languages
+
+- **Check a call** (`GET /api/v1/call-check/questions`, `POST /api/v1/call-check/assess`): the costliest scams (fake police "digital arrest", fake bank officers, OTP and remote-access calls) happen on calls, where there is nothing to paste. Ten yes/no questions about what the caller is doing give a live verdict while the call is still on, the scam type, a line to say ("I don't share OTPs or make payments on calls…"), and what to do next. Any request for an OTP/PIN, a remote-access app, secrecy or a transfer to a "safe account" is decisive on its own.
+- **Verify a payment** (`POST /api/v1/payment-proof/check`): for shopkeepers and sellers who are shown a fake, edited, pending or reused "payment successful" screenshot. It reads the screenshot and flags: payment pending/failed or only a *request*, amount not matching what you expected, missing 12-digit UPI reference, old or future date, and fake-payment-app watermarks. It never calls a screenshot genuine; it always says to confirm the credit in your own bank app first.
+- **Share to ScamShield** (installable web app): on Android, add ScamShield to the home screen and it appears in the Share menu of WhatsApp, Messages and Gallery. Sharing a message or screenshot opens ScamShield and scans it straight away, with no copying and pasting. Implemented with a web app manifest `share_target` and a service worker (`frontend/manifest.webmanifest`, `frontend/sw.js`).
+- **Hindi, Hinglish, Tamil and Tanglish**: native-language scam words (e.g. खाता बंद, तुरंत, ओटीपी बताएं, khata band, OTP batao, முடக்கப்படும், உடனே) are recognised and highlighted, so scams written entirely in these languages are caught (`app/services/multilingual.py`).
+
+## 📏 Measured Accuracy
+
+`benchmark/` holds labelled messages and an evaluation script:
+
+```bash
+python -m benchmark.evaluate --show-errors     # tuning set
+python -m benchmark.evaluate --holdout         # held-out set (never used for tuning)
+```
+
+A scam counts as caught when the verdict is SCAM or SUSPICIOUS; a genuine message is a false alarm when it isn't SAFE.
+
+| Set | Messages | Scams caught | Rated SCAM | Genuine wrongly flagged |
+|---|---|---|---|---|
+| Tuning set, before tuning | 48 scams / 44 genuine | 96% | 77% | 5% |
+| Tuning set, after tuning | 48 scams / 44 genuine | 100% | 81% | 0% |
+| **Held-out set** | 16 scams / 14 genuine | **81%** | 44% | **0%** |
+
+The held-out figure is the honest estimate. Its misses are reworded scams ("account temporarily restricted, re-verify…", "read out the code you got by SMS"), the known weakness of keyword rules; enabling an LLM provider (`LLM_PROVIDER` in `.env`) is the next step for those. Caveats: the messages were written by the developers to resemble real Indian scam and bank SMS, not collected from victims, and the sets are small. Genuine bank OTP messages, credit/debit alerts, bill reminders and KYC-at-branch notices are included specifically to guard against false alarms. `tests/test_new_tools.py` fails if tuning-set accuracy drops below 95% caught / above 5% false alarms.
 
 ## 🧠 Risk Scoring Engine Formula
 

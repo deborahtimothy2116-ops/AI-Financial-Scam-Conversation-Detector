@@ -15,6 +15,7 @@ from app.services.llm_service import llm_service
 from app.services.risk_engine import risk_engine
 from app.services.explanation_service import explanation_service
 from app.services.recommendation_service import recommendation_service
+from app.services.community_service import STRONG_REPORT_THRESHOLD as COMMUNITY_STRONG_THRESHOLD
 from app.utils.constants import (
     ScamCategory,
     RiskLevel,
@@ -33,6 +34,7 @@ class ScamDetectorService:
         input_source: InputSource = InputSource.TEXT,
         language_override: Optional[str] = None,
         analysis_id: Optional[str] = None,
+        community_reports: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """Execute full end-to-end analysis on message conversation."""
         start_time = time.perf_counter()
@@ -95,6 +97,24 @@ class ScamDetectorService:
                 )
             )
 
+        # Step 5b: Identifiers the community has already reported (phone, UPI ID, website, email)
+        if community_reports:
+            top = max(community_reports, key=lambda r: r["report_count"])
+            total = sum(r["report_count"] for r in community_reports)
+            listed = ", ".join(f"{r['identifier']} ({r['report_count']})" for r in community_reports[:3])
+            indicator_models.append(
+                IndicatorResponse(
+                    title="Reported by the ScamShield Community",
+                    description=f"Other users have reported details in this message as used by scammers: {listed}. "
+                                f"Reports are unverified, but {total} report(s) is a strong reason not to pay or reply.",
+                    severity=IndicatorSeverity.HIGH if top["report_count"] >= COMMUNITY_STRONG_THRESHOLD else IndicatorSeverity.MEDIUM,
+                    confidence=0.9 if top["report_count"] >= COMMUNITY_STRONG_THRESHOLD else 0.7,
+                    snippet=top["identifier"],
+                    evidence=top["identifier"],
+                    rule_id="RULE_COMMUNITY_REPORTED",
+                )
+            )
+
         # Step 6: Risk Engine Calibration
         urgency_score = float(llm_result.get("urgency_score", 0.0))
         credential_risk = float(llm_result.get("credential_risk", 0.0))
@@ -114,6 +134,14 @@ class ScamDetectorService:
             extracted_entities=raw_entities,
             scam_category=category,
         )
+
+        # Community reports set a floor: 1-2 reports => at least SUSPICIOUS, 3+ => SCAM.
+        if community_reports:
+            top_count = max(r["report_count"] for r in community_reports)
+            floor = 70.0 if top_count >= COMMUNITY_STRONG_THRESHOLD else 45.0
+            if risk_score < floor:
+                risk_score = floor
+                risk_level = RiskLevel.HIGH if floor >= 60.0 else RiskLevel.MEDIUM
 
         is_scam = risk_score >= 30.0
         if not is_scam:

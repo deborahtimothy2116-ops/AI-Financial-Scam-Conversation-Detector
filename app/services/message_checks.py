@@ -45,6 +45,13 @@ OFFICIAL_DOMAINS: Dict[str, List[str]] = {
     "tneb": ["tnebltd.gov.in", "tangedco.gov.in"],
 }
 
+# Link shorteners hide the destination; they are flagged as such, not as impersonation.
+SHORTENERS = {
+    "bit.ly", "tinyurl.com", "t.co", "cutt.ly", "is.gd", "v.gd", "rb.gy",
+    "shorturl.at", "goo.gl", "tiny.cc", "ow.ly", "buff.ly", "s.id", "t.ly",
+    "rebrand.ly", "shorte.st", "bl.ink", "lnkd.in", "wa.link",
+}
+
 FREE_EMAIL_DOMAINS = {
     "gmail.com", "yahoo.com", "yahoo.in", "outlook.com", "hotmail.com",
     "rediffmail.com", "protonmail.com", "proton.me", "aol.com", "mail.com",
@@ -90,7 +97,10 @@ DOMAIN_RE = re.compile(
     re.IGNORECASE,
 )
 EMAIL_RE = re.compile(r"\b[a-z0-9._%+-]+@((?:[a-z0-9-]+\.)+[a-z]{2,})\b", re.IGNORECASE)
-PHONE_RE = re.compile(r"(?:\+?\d{1,3}[-\s]?)?\b\d{3,5}[-\s]?\d{3,4}[-\s]?\d{3,4}\b")
+PHONE_RE = re.compile(
+    r"(?:\+91[\s-]?|(?<!\d)0)?(?<!\d)[6-9]\d{4}[\s-]?\d{5}(?!\d)"  # Indian mobile: 98765 43210, +91-98765-43210
+    r"|(?:\+?\d{1,3}[-\s]?)?\b\d{3,5}[-\s]?\d{3,4}[-\s]?\d{3,4}\b"  # other grouped / landline formats
+)
 BANK_DETAILS_RE = re.compile(
     r"\b(?:share|send|provide|give|enter|update|confirm|submit|fill|reply with)\b.{0,40}?"
     r"\b(?:bank details|account number|account details|a/c (?:no|number)|card number|card details|"
@@ -98,7 +108,7 @@ BANK_DETAILS_RE = re.compile(
     re.IGNORECASE,
 )
 MONEY_REQUEST_RE = re.compile(
-    r"\b(?:pay|send|transfer|deposit|remit)\b.{0,30}?(?:₹|rs\.?\s?|inr\s?|\$|usd\s?)\s?\d[\d,]*"
+    r"(?<!fixed )\b(?:pay|send|transfer|deposit|remit)\b(?!\s+(?:of|has|was|is|made|received)\b).{0,30}?(?:₹|rs\.?\s?|inr\s?|\$|usd\s?)\s?\d[\d,]*"
     r"|(?:₹|rs\.?\s?|inr\s?|\$)\s?\d[\d,]*.{0,25}?\b(?:fee|charge|charges|deposit|advance|penalty|fine)\b",
     re.IGNORECASE,
 )
@@ -156,7 +166,7 @@ def _find_domain_mismatch(domains: List[str], brands: List[str]):
     """Return (domain, brand, official_domains, claimed) for the first domain that
     names or imitates a brand without belonging to it, else None."""
     for domain in domains:
-        if domain in FREE_EMAIL_DOMAINS:
+        if domain in FREE_EMAIL_DOMAINS or domain in SHORTENERS:
             continue
         normalized = domain.translate(_LEET).replace("-", "")
         for brand, official in OFFICIAL_DOMAINS.items():

@@ -1,0 +1,92 @@
+{"id": "s01", "label": "scam", "type": "kyc", "message": "Dear SBI user, your YONO account will be suspended today. Complete PAN verification here: http://sbi-yono-pan.in-verify.xyz"}
+{"id": "s02", "label": "scam", "type": "kyc", "message": "HDFC: Your netbanking is blocked due to incomplete KYC. Update within 24 hrs at bit.ly/hdfc-kyc-upd8 to avoid permanent closure."}
+{"id": "s03", "label": "scam", "type": "kyc", "message": "Dear customer your account will be deactivated tonight. Kindly update your KYC by calling our executive at 9123456780."}
+{"id": "s04", "label": "scam", "type": "kyc", "message": "ICICI Alert: Aadhaar not linked with your account. Your account will be freezed in 2 hours. Update now: icici-aadhaar-link.online"}
+{"id": "s05", "label": "scam", "type": "kyc", "message": "Your Paytm KYC has expired. Your wallet will be blocked. Install the Paytm KYC app from this link to continue: paytm-kyc.apk-download.site"}
+{"id": "s06", "label": "scam", "type": "otp", "message": "Hello sir, I am calling from SBI card department. To stop the Rs 49,999 transaction please share the OTP you just received."}
+{"id": "s07", "label": "scam", "type": "otp", "message": "Amazon: We've credited Rs 500 cashback. Tell us the 6 digit code sent to your mobile to confirm the reward."}
+{"id": "s08", "label": "scam", "type": "otp", "message": "Your electricity connection will be disconnected tonight at 9.30 pm. Please contact electricity officer 8260XXXX12 immediately."}
+{"id": "s09", "label": "scam", "type": "remote", "message": "For your refund, please install AnyDesk from the Play Store and tell me the 9 digit code shown on screen."}
+{"id": "s10", "label": "scam", "type": "remote", "message": "Sir your KYC update is pending, download QuickSupport and share the ID, our technical team will complete it."}
+{"id": "s11", "label": "scam", "type": "qr", "message": "I am buying your sofa from OLX. I have sent a QR code, scan it and enter your UPI PIN to receive Rs 12,000 advance."}
+{"id": "s12", "label": "scam", "type": "qr", "message": "Congratulations! You have received a cashback of ₹2,499. Scan this QR code to collect the amount in your account."}
+{"id": "s13", "label": "scam", "type": "prize", "message": "Congratulations!! Your mobile number has won Rs 25,00,000 in the KBC lucky draw. To claim, pay the processing charges of Rs 12,500."}
+{"id": "s14", "label": "scam", "type": "prize", "message": "Dear winner, you have been selected for a free iPhone 15. Pay only ₹499 delivery charge to claim your gift."}
+{"id": "s15", "label": "scam", "type": "prize", "message": "Your parcel from UK containing a gift and $50,000 is held at Delhi customs. Pay customs clearance fee of Rs 35,000 today."}
+{"id": "s16", "label": "scam", "type": "job", "message": "Part time job offer! Earn Rs 3000-8000 daily by liking YouTube videos. Contact HR on Telegram @EarnDailyHR."}
+{"id": "s17", "label": "scam", "type": "job", "message": "Hi, we are hiring for work from home. Complete simple tasks and earn commission. First task needs a deposit of Rs 1000 which will be returned with profit."}
+{"id": "s18", "label": "scam", "type": "job", "message": "Congratulations, you are shortlisted for Amazon data entry job. Salary 45,000/month. Pay registration fee Rs 2,500 to confirm your joining."}
+{"id": "s19", "label": "scam", "type": "invest", "message": "Join our VIP stock tips group. 100% guaranteed returns, double your money in 30 days. Invest minimum Rs 10,000."}
+{"id": "s20", "label": "scam", "type": "invest", "message": "Crypto trading opportunity: guaranteed profit of 5% daily. Send USDT to wallet 0x9f8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b to start."}
+{"id": "s21", "label": "scam", "type": "invest", "message": "Madam, our trading app shows your profit is Rs 4.2 lakh. To withdraw, you must first pay 20% tax of Rs 84,000."}
+{"id": "s22", "label": "scam", "type": "arrest", "message": "This is Inspector Sharma from Mumbai Cyber Crime. A parcel with drugs in your name has been seized. You are under digital arrest. Do not disconnect this video call."}
+{"id": "s23", "label": "scam", "type": "arrest", "message": "CBI notice: Your Aadhaar is linked to a money laundering case. Join the Skype call immediately or an arrest warrant will be issued. Do not tell anyone."}
+{"id": "s24", "label": "scam", "type": "arrest", "message": "TRAI: Your mobile number will be blocked in 2 hours due to illegal activity. Press 9 to speak to the officer."}
+{"id": "s25", "label": "scam", "type": "arrest", "message": "Income tax department: you have unpaid tax dues. Pay Rs 48,000 penalty today or legal action will be taken against you."}
+{"id": "s26", "label": "scam", "type": "refund", "message": "Hi, I sent Rs 5,000 to your number by mistake. Please return it to my Google Pay urgently, I need it for hospital."}
+{"id": "s27", "label": "scam", "type": "refund", "message": "Your refund of Rs 3,250 for the cancelled order is pending. Share your debit card number and expiry date to process the refund."}
+{"id": "s28", "label": "scam", "type": "loan", "message": "Instant loan approved Rs 2,00,000 without documents. Pay Rs 1,999 processing fee to get the amount in 10 minutes."}
+{"id": "s29", "label": "scam", "type": "loan", "message": "Your loan app EMI is overdue. Pay Rs 8,000 now or we will send your photos to all your contacts."}
+{"id": "s30", "label": "scam", "type": "family", "message": "Hi Mom, this is my new number, my phone broke. I urgently need Rs 15,000 for college fees, please send to this UPI: rahul.help@ybl"}
+{"id": "s31", "label": "scam", "type": "family", "message": "Dad I am in trouble, lost my wallet. Please send 10,000 to this account immediately, don't call, I can't talk now."}
+{"id": "s32", "label": "scam", "type": "delivery", "message": "India Post: Your package could not be delivered due to incomplete address. Update here within 12 hours: indiapost-redelivery.top/track"}
+{"id": "s33", "label": "scam", "type": "delivery", "message": "FedEx: Shipment held. Pay Rs 49 re-delivery charge at fedex-in-support.click to avoid return."}
+{"id": "s34", "label": "scam", "type": "utility", "message": "Dear consumer, your power will be cut tonight as last month bill not updated. Call 9876012345 immediately."}
+{"id": "s35", "label": "scam", "type": "utility", "message": "Your gas connection subsidy of Rs 2,300 is pending. Click http://mylpg-subsidy.xyz and enter your bank details to receive."}
+{"id": "s36", "label": "scam", "type": "phish", "message": "Netflix: Your payment failed and membership is on hold. Update your card details at netflix-billing-update.com"}
+{"id": "s37", "label": "scam", "type": "phish", "message": "Apple ID locked due to suspicious sign-in. Verify now: https://apple.com.id-unlock.shop/verify"}
+{"id": "s38", "label": "scam", "type": "phish", "message": "Your SBI reward points worth Rs 7,850 expire today. Redeem now at sbi-rewardz.online and enter card details."}
+{"id": "s39", "label": "scam", "type": "phish", "message": "PayPal: Unusual activity. Confirm your identity at https://pаypal.com/secure to avoid suspension."}
+{"id": "s40", "label": "scam", "type": "romance", "message": "I have fallen in love with you. I sent you a gift package with jewellery and dollars, but customs needs Rs 60,000 fee. Please pay, darling."}
+{"id": "s41", "label": "scam", "type": "hindi", "message": "आपका बैंक खाता आज बंद हो जाएगा। केवाईसी अपडेट के लिए तुरंत इस लिंक पर क्लिक करें: sbi-kyc-hindi.xyz"}
+{"id": "s42", "label": "scam", "type": "hindi", "message": "बधाई हो! आपने 10 लाख की लॉटरी जीती है। इनाम पाने के लिए 5000 रुपये शुल्क भुगतान करें।"}
+{"id": "s43", "label": "scam", "type": "hindi", "message": "मैं सीबीआई से बोल रहा हूँ। आपके नाम पर केस दर्ज है, आप डिजिटल अरेस्ट में हैं, किसी को मत बताना।"}
+{"id": "s44", "label": "scam", "type": "hinglish", "message": "Aapka khata band ho jayega. Turant OTP batao warna account block ho jayega."}
+{"id": "s45", "label": "scam", "type": "hinglish", "message": "Aapne 5 lakh ka inaam jeeta hai! Processing fee 2000 rupaye paise bhejo iss UPI par: lucky.draw@ybl"}
+{"id": "s46", "label": "scam", "type": "tamil", "message": "உங்கள் வங்கி கணக்கு இன்று முடக்கப்படும். KYC update செய்ய உடனே ₹2000 அனுப்பவும்."}
+{"id": "s47", "label": "scam", "type": "tamil", "message": "நீங்கள் 5 லட்சம் பரிசு வென்றுள்ளீர்கள்! கட்டணம் ₹1500 உடனே அனுப்பவும்."}
+{"id": "s48", "label": "scam", "type": "tanglish", "message": "Unga account mudakkappadum. Udane OTP sollunga illana block aagum."}
+{"id": "l01", "label": "legit", "type": "otp", "message": "482913 is your OTP for transaction of Rs 1,250.00 at AMAZON on HDFC Bank card XX4321. Valid for 10 mins. Do not share it with anyone."}
+{"id": "l02", "label": "legit", "type": "otp", "message": "Your SBI OTP for login is 553201. Never share your OTP with anyone. SBI never asks for OTP."}
+{"id": "l03", "label": "legit", "type": "otp", "message": "Use 918273 as your one time password to verify your Swiggy account. Do not share this code."}
+{"id": "l04", "label": "legit", "type": "otp", "message": "Your Aadhaar OTP is 402817. UIDAI never asks for OTP over call. Valid for 10 minutes."}
+{"id": "l05", "label": "legit", "type": "bank", "message": "Dear Customer, Rs 5,000 credited to your a/c XX1234 on 25-09-26 by UPI ref 412345678901. -SBI"}
+{"id": "l06", "label": "legit", "type": "bank", "message": "Rs 1,250.00 debited from a/c **4321 on 24-09 to SWIGGY. Not you? Call the number on the back of your card."}
+{"id": "l07", "label": "legit", "type": "bank", "message": "Your KYC is due for periodic update. Please visit your nearest branch with ID proof. -Axis Bank"}
+{"id": "l08", "label": "legit", "type": "bank", "message": "Your debit card XX12 will expire on 30/09/2026. A replacement card has been dispatched to your registered address."}
+{"id": "l09", "label": "legit", "type": "bank", "message": "Your ICICI Bank credit card statement for September is ready. Total due Rs 12,430, due date 15 Oct."}
+{"id": "l10", "label": "legit", "type": "bank", "message": "Dear customer, your fixed deposit of Rs 1,00,000 has matured and been credited to your savings account. -Kotak"}
+{"id": "l11", "label": "legit", "type": "bank", "message": "Salary of Rs 48,500 credited to your account XX9981 on 01-09-2026. Available balance Rs 52,310."}
+{"id": "l12", "label": "legit", "type": "bill", "message": "Your electricity bill of Rs 1,240 is due on 30 Sep. Pay via the TNEB app or website. Ignore if already paid."}
+{"id": "l13", "label": "legit", "type": "bill", "message": "Airtel: Your postpaid bill of Rs 599 for September is generated. Due date 05-Oct. Pay on Airtel Thanks app."}
+{"id": "l14", "label": "legit", "type": "bill", "message": "Jio: Your plan expires on 28 Sep. Recharge on the MyJio app to continue enjoying services."}
+{"id": "l15", "label": "legit", "type": "delivery", "message": "Your Amazon order #405-2291 has been delivered. Rate your experience at https://www.amazon.in/review"}
+{"id": "l16", "label": "legit", "type": "delivery", "message": "Flipkart: Your order for Boat Airdopes is out for delivery today. Track at https://www.flipkart.com/orders"}
+{"id": "l17", "label": "legit", "type": "delivery", "message": "Swiggy: Your order from Saravana Bhavan is on the way. Delivery partner Ravi will reach in 15 mins."}
+{"id": "l18", "label": "legit", "type": "delivery", "message": "India Post: Your speed post EA123456789IN has been delivered at Chennai GPO."}
+{"id": "l19", "label": "legit", "type": "travel", "message": "IRCTC: PNR 4521367890, Train 12622, 26-Sep, Coach B2 Berth 34 confirmed. Happy journey."}
+{"id": "l20", "label": "legit", "type": "travel", "message": "Your IndiGo flight 6E 512 to Delhi departs at 07:40 tomorrow. Web check-in is open on the IndiGo app."}
+{"id": "l21", "label": "legit", "type": "health", "message": "Reminder: Your appointment with Dr. Priya at Apollo Clinic is on 27 Sep at 11:00 am."}
+{"id": "l22", "label": "legit", "type": "personal", "message": "Hey, are we still meeting for lunch tomorrow at 1? I'll book the table."}
+{"id": "l23", "label": "legit", "type": "personal", "message": "Mom, reached college safely. Will call you at night."}
+{"id": "l24", "label": "legit", "type": "personal", "message": "Can you send me the photos from yesterday's function?"}
+{"id": "l25", "label": "legit", "type": "personal", "message": "Happy birthday! Have a wonderful year ahead 🎉"}
+{"id": "l26", "label": "legit", "type": "personal", "message": "The meeting has been moved to 3 pm. Please bring the report."}
+{"id": "l27", "label": "legit", "type": "personal", "message": "I transferred the rent for this month, please check and confirm."}
+{"id": "l28", "label": "legit", "type": "personal", "message": "Don't forget to pick up vegetables on the way home."}
+{"id": "l29", "label": "legit", "type": "personal", "message": "Bro, the cricket match starts at 7:30, come over by 7."}
+{"id": "l30", "label": "legit", "type": "work", "message": "Hi team, please submit your timesheets by Friday 5 pm."}
+{"id": "l31", "label": "legit", "type": "work", "message": "Your leave request for 2 Oct has been approved by your manager."}
+{"id": "l32", "label": "legit", "type": "school", "message": "Parent-teacher meeting on Saturday 28 Sep at 10 am. Please attend. -DAV School"}
+{"id": "l33", "label": "legit", "type": "gov", "message": "Your vaccination certificate is available on CoWIN. Download it from the official portal."}
+{"id": "l34", "label": "legit", "type": "gov", "message": "Your passport application has been received. Track status on passportindia.gov.in"}
+{"id": "l35", "label": "legit", "type": "promo", "message": "Big Billion Days sale starts 27 Sep on Flipkart. Up to 80% off on electronics."}
+{"id": "l36", "label": "legit", "type": "promo", "message": "Zomato: Get 30% off on your next order. Use code TASTY30. T&C apply."}
+{"id": "l37", "label": "legit", "type": "hindi", "message": "कल शाम को मिलते हैं, खाना साथ में खाएंगे।"}
+{"id": "l38", "label": "legit", "type": "hindi", "message": "आपका बिजली बिल 850 रुपये है, अंतिम तिथि 30 सितंबर।"}
+{"id": "l39", "label": "legit", "type": "hinglish", "message": "Kal office aa raha hai kya? Meeting 10 baje hai."}
+{"id": "l40", "label": "legit", "type": "tamil", "message": "நாளை காலை சந்திப்போம், நன்றி!"}
+{"id": "l41", "label": "legit", "type": "tamil", "message": "உங்கள் ஆர்டர் இன்று டெலிவரி செய்யப்படும்."}
+{"id": "l42", "label": "legit", "type": "police", "message": "The police station called about the lost wallet I reported, they found it!"}
+{"id": "l43", "label": "legit", "type": "customs", "message": "Customs clearance for my parcel is done, delivery tomorrow."}
+{"id": "l44", "label": "legit", "type": "friend_money", "message": "I've paid you back the 500 for the movie tickets, check GPay."}

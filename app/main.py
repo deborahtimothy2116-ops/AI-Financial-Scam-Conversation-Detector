@@ -5,7 +5,8 @@ import os
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from urllib.parse import urlencode
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from app.api import api_router, health_router
 from app.core.config import settings
@@ -164,6 +165,26 @@ async def serve_index(request: Request):
         "api_v1_prefix": settings.API_V1_STR,
         "disclaimer": "Defensive cybersecurity tool for detecting financial fraud before making payments. No private account scraping or real money transactions performed.",
     }
+
+
+@app.get("/sw.js", include_in_schema=False)
+async def serve_service_worker():
+    """Service worker served from the root so it can receive shares for the whole app."""
+    return FileResponse(os.path.join(frontend_dir, "sw.js"), media_type="application/javascript",
+                        headers={"Service-Worker-Allowed": "/", "Cache-Control": "no-cache"})
+
+
+@app.get("/manifest.webmanifest", include_in_schema=False)
+async def serve_manifest():
+    return FileResponse(os.path.join(frontend_dir, "manifest.webmanifest"), media_type="application/manifest+json")
+
+
+@app.post("/share-target", include_in_schema=False)
+async def share_target_fallback(request: Request):
+    """Used only if the service worker isn't active yet: pass shared text to the app via the URL."""
+    form = await request.form()
+    text = "\n".join(str(form.get(k)) for k in ("title", "text", "url") if form.get(k) and isinstance(form.get(k), str))
+    return RedirectResponse(url=f"/?{urlencode({'text': text[:2500]})}" if text.strip() else "/", status_code=303)
 
 
 @app.get("/app", tags=["Frontend"], include_in_schema=False)
