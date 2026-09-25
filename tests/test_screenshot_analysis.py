@@ -56,3 +56,17 @@ def test_screenshot_empty_ocr_result(client: TestClient, sample_image_bytes):
         response = client.post("/api/v1/analysis/image", files=files)
         assert response.status_code == 422
         assert response.json()["error_code"] == "VALIDATION_ERROR"
+
+
+def test_screenshot_without_ocr_engine_explains_setup(client: TestClient, sample_image_bytes):
+    """With no OCR engine installed, the upload fails with setup instructions, not 'no readable text'."""
+    from app.services.ocr_service import ocr_service
+
+    with patch.object(ocr_service, "_winocr_available", False), patch.object(ocr_service, "_tesseract_available", False):
+        files = {"file": ("chat_screenshot.png", sample_image_bytes, "image/png")}
+        response = client.post("/api/v1/analyze/image", files=files)
+
+    assert response.status_code == 422
+    body = response.json()
+    assert body["error_code"] == "OCR_ERROR"
+    assert "winocr" in body["message"]

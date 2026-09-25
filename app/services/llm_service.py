@@ -8,7 +8,15 @@ import httpx
 from app.core.config import settings
 from app.core.logging import logger
 from app.core.exceptions import LLMServiceError
+from app.services.message_checks import run_message_checks
 from app.utils.constants import ScamCategory, IndicatorSeverity, REGEX_PATTERNS
+
+URGENCY_PHRASES = [
+    "immediately", "within 15 minutes", "within 24 hours", "within 2 hours", "within 1 hour",
+    "urgent", "hurry", "last chance", "today only", "act now", "final notice", "last warning",
+    "expires today", "expire today", "today itself", "will be suspended", "will be terminated",
+    "will be deactivated", "will be closed", "penalty", "failure to comply",
+]
 
 
 class BaseLLMProvider(ABC):
@@ -135,8 +143,13 @@ class RuleBasedFallbackProvider(BaseLLMProvider):
             detected_category = ScamCategory.OTP_REMOTE_ACCESS_SCAM
 
         # 4. Check for Lottery / Lucky Draw Advance Fee
-        if ("lottery" in cleaned or "won" in cleaned or "lucky draw" in cleaned or "winner" in cleaned) and (
-            "claim" in cleaned or "processing fee" in cleaned or "tax" in cleaned or "charge" in cleaned or "prize" in cleaned or "fee" in cleaned
+        if (
+            ("lottery" in cleaned or "won" in cleaned or "lucky draw" in cleaned or "winner" in cleaned) and (
+                "claim" in cleaned or "processing fee" in cleaned or "tax" in cleaned or "charge" in cleaned or "prize" in cleaned or "fee" in cleaned
+            )
+        ) or (
+            ("congratulations" in cleaned or "you are selected" in cleaned or "you have been selected" in cleaned)
+            and ("free gift" in cleaned or "reward" in cleaned or "prize" in cleaned or "cash" in cleaned or "claim" in cleaned)
         ):
             indicators.append({
                 "title": "Unsolicited Prize / Advance Fee Scam",
@@ -244,8 +257,18 @@ class RuleBasedFallbackProvider(BaseLLMProvider):
             })
             payment_vector_risk = max(payment_vector_risk, 80.0)
 
-        # 11. Urgency keywords check
-        if any(w in cleaned for w in ["immediately", "within 15 minutes", "within 24 hours", "urgent", "hurry", "last chance", "today only"]):
+        # 11. Sender, link, request and writing-style checks
+        checks = run_message_checks(text)
+        indicators.extend(checks.indicators)
+        credential_risk = max(credential_risk, checks.credential_risk)
+        payment_vector_risk = max(payment_vector_risk, checks.payment_vector_risk)
+        link_obfuscation_risk = max(link_obfuscation_risk, checks.link_obfuscation_risk)
+        coercion_risk = max(coercion_risk, checks.coercion_risk)
+        if detected_category == ScamCategory.SAFE_NORMAL_CONVERSATION and checks.category_hint:
+            detected_category = checks.category_hint
+
+        # 12. Urgency, deadline and threat keywords check
+        if any(w in cleaned for w in URGENCY_PHRASES):
             urgency_score = max(urgency_score, 75.0)
             if not any(i["rule_id"] == "RULE_FALSE_URGENCY" for i in indicators):
                 indicators.append({

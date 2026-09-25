@@ -12,6 +12,7 @@ pillow>=10.2.0
 opencv-python-headless>=4.9.0.80
 numpy>=1.26.0
 pytesseract>=0.3.10
+winocr>=0.0.15; sys_platform == "win32"
 langdetect>=1.0.9
 httpx>=0.27.0
 requests>=2.31.0

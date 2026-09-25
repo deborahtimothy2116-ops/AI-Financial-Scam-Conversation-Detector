@@ -130,6 +130,13 @@ class MultiEngineOCRService(BaseOCRService):
         extracted_text = ""
         confidence = 0.0
 
+        if not self.is_available():
+            raise OCRProcessingError(
+                "Screenshot reading is not set up on this server. On Windows run "
+                "'pip install winocr'; on Linux/macOS install Tesseract OCR. "
+                "Meanwhile you can paste the message text into Analyze Message."
+            )
+
         try:
             pil_img = Image.open(io.BytesIO(image_bytes))
         except Exception as e:
