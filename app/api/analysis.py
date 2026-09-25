@@ -25,6 +25,7 @@ from app.schemas.analysis import (
 )
 from app.schemas.common import APIResponse
 from app.schemas.feedback import FeedbackCreateRequest, FeedbackResponse
+from app.services.community_service import find_reported_in_text
 from app.services.ocr_service import ocr_service
 from app.services.recommendation_service import recommendation_service
 from app.services.risk_engine import risk_engine
@@ -152,6 +153,7 @@ async def _process_text_analysis(
         raw_text=cleaned_input,
         input_source=InputSource.TEXT,
         language_override=payload.language,
+        community_reports=find_reported_in_text(analysis_repo.db, cleaned_input),
     )
 
     # Persist record in database
@@ -280,6 +282,7 @@ async def _process_image_analysis(
         raw_text=extracted_text,
         input_source=InputSource.IMAGE_OCR,
         language_override=language,
+        community_reports=find_reported_in_text(analysis_repo.db, extracted_text),
     )
 
     db_analysis = analysis_repo.create_analysis_record(

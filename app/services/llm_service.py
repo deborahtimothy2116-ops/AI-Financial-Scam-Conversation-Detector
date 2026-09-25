@@ -12,6 +12,26 @@ from app.services.link_xray import xray_links
 from app.services.message_checks import run_message_checks
 from app.utils.constants import ScamCategory, IndicatorSeverity, REGEX_PATTERNS
 
+AUTHORITY_THREAT_OR_DEMAND = re.compile(
+    r"\b(?:arrest\w*|warrant|legal action|summons|fir|case (?:is )?(?:registered|filed)|penalty|fine|"
+    r"disconnect\w*|power cut|block\w*|suspend\w*|seiz\w*|jail|pay|payment|transfer|fee|charges?|deposit|"
+    r"immediately|urgent\w*|tonight|within \d+)\b",
+    re.IGNORECASE,
+)
+
+DIGITAL_ARREST_AUTHORITY = re.compile(
+    r"\b(?:cbi|police|customs|narcotics|ncb|enforcement directorate|\bed officer|trai|cyber\s*crime|crime branch|"
+    r"interpol|income tax officer|rbi officer|court)\b",
+    re.IGNORECASE,
+)
+DIGITAL_ARREST_TACTIC = re.compile(
+    r"digital(?:ly)? arrest|arrest warrant|video call|skype|stay on (?:the )?(?:video )?call|do not (?:disconnect|tell)|"
+    r"don'?t (?:disconnect|tell)|keep (?:this|it) (?:confidential|secret)|parcel (?:containing|with|has)|"
+    r"(?:drugs|narcotics|mdma|fake passports?) (?:found|in your)|money laundering|"
+    r"(?:verification|safe|secure|rbi) account|transfer (?:all )?(?:your )?(?:money|funds|savings) for verification",
+    re.IGNORECASE,
+)
+
 URGENCY_PHRASES = [
     "immediately", "within 15 minutes", "within 24 hours", "within 2 hours", "within 1 hour",
     "urgent", "hurry", "last chance", "today only", "act now", "final notice", "last warning",
@@ -216,7 +236,12 @@ class RuleBasedFallbackProvider(BaseLLMProvider):
                 detected_category = ScamCategory.PHISHING_CREDENTIAL_HARVESTING
 
         # 8. Check for Authority Impersonation & Coercive Threats (unless it's an advance fee prize pretext)
-        if REGEX_PATTERNS["threat_authority"].search(cleaned) and detected_category != ScamCategory.LOTTERY_PRIZE_SCAM:
+        # Mentioning police/customs/etc. is not a threat by itself ("police found my wallet"), so also require a threat or demand.
+        if (
+            REGEX_PATTERNS["threat_authority"].search(cleaned)
+            and AUTHORITY_THREAT_OR_DEMAND.search(cleaned)
+            and detected_category != ScamCategory.LOTTERY_PRIZE_SCAM
+        ):
             indicators.append({
                 "title": "Authority Coercion & Intimidation Tactic",
                 "description": "Impersonating law enforcement (Police, CBI, Cyber Cell, RBI) or utility providers with threats of immediate arrest or power disconnection.",
@@ -230,6 +255,23 @@ class RuleBasedFallbackProvider(BaseLLMProvider):
             if detected_category == ScamCategory.SAFE_NORMAL_CONVERSATION:
                 detected_category = ScamCategory.URGENT_IMPERSONATION
 
+
+        # 8b. "Digital arrest": fake police/CBI/customs threatening arrest over a video call
+        if DIGITAL_ARREST_AUTHORITY.search(cleaned) and DIGITAL_ARREST_TACTIC.search(cleaned):
+            indicators.append({
+                "title": "Digital Arrest / Fake Police Call Scam",
+                "description": "Someone posing as police, CBI, customs or another agency threatens arrest over a call or video call "
+                               "(often about a 'parcel with drugs' or 'money laundering'), tells you to stay on the call and keep it secret, "
+                               "and demands money for 'verification'. There is no such thing as a 'digital arrest': real agencies never "
+                               "question or arrest anyone over video call or ask for money. Hang up and call 1930.",
+                "severity": IndicatorSeverity.CRITICAL.value,
+                "confidence": 0.96,
+                "snippet": (DIGITAL_ARREST_TACTIC.search(cleaned).group(0))[:80],
+                "rule_id": "RULE_DIGITAL_ARREST",
+            })
+            coercion_risk = max(coercion_risk, 98.0)
+            urgency_score = max(urgency_score, 90.0)
+            detected_category = ScamCategory.URGENT_IMPERSONATION
 
         # 9. Suspicious URL Shorteners & Phishing Links
         if extracted_entities.get("suspicious_shorteners") or extracted_entities.get("suspicious_tld_urls"):

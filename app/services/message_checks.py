@@ -97,7 +97,10 @@ DOMAIN_RE = re.compile(
     re.IGNORECASE,
 )
 EMAIL_RE = re.compile(r"\b[a-z0-9._%+-]+@((?:[a-z0-9-]+\.)+[a-z]{2,})\b", re.IGNORECASE)
-PHONE_RE = re.compile(r"(?:\+?\d{1,3}[-\s]?)?\b\d{3,5}[-\s]?\d{3,4}[-\s]?\d{3,4}\b")
+PHONE_RE = re.compile(
+    r"(?:\+91[\s-]?|(?<!\d)0)?(?<!\d)[6-9]\d{4}[\s-]?\d{5}(?!\d)"  # Indian mobile: 98765 43210, +91-98765-43210
+    r"|(?:\+?\d{1,3}[-\s]?)?\b\d{3,5}[-\s]?\d{3,4}[-\s]?\d{3,4}\b"  # other grouped / landline formats
+)
 BANK_DETAILS_RE = re.compile(
     r"\b(?:share|send|provide|give|enter|update|confirm|submit|fill|reply with)\b.{0,40}?"
     r"\b(?:bank details|account number|account details|a/c (?:no|number)|card number|card details|"

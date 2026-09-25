@@ -227,6 +227,13 @@ Checks behind it, besides the scam-pattern rules (KYC, lottery, QR, OTP, remote 
 - **🎯 Spot-the-Scam quiz**: a practice mode with realistic SMS, WhatsApp and email messages. Guess SAFE / SUSPICIOUS / SCAM, then see the highlighted red flags and a one-line lesson. API: `GET /api/v1/quiz/questions`, `POST /api/v1/quiz/answer`. A test checks that the detector agrees with every quiz answer.
 - **👪 Warn family on WhatsApp**: on a SUSPICIOUS or SCAM result, one tap opens WhatsApp with a ready-written warning (verdict, red flags, the 1930 helpline). Links in the quoted message are defanged (`hxxps://evil[.]xyz`) so sharing the warning never spreads the scam link.
 
+## 🆘 Real-World Help
+
+- **"Scammed? Get help" emergency mode**: pick what happened (UPI payment, card, OTP shared, remote-access app, "digital arrest" call, investment app…) and get a tailored action plan, ordered DO NOW / TODAY / NEXT DAYS: call **1930** within the golden hour, block card/UPI through the bank's official number and report within 3 working days (RBI limits customer liability for promptly reported unauthorised electronic transactions), file at **cybercrime.gov.in**, report the number on **Sanchar Saathi (Chakshu)**, escalate to the **RBI Ombudsman** after 30 days, and beware of "recovery" scams. Progress is saved on the device.
+- **Complaint draft generator**: fill in what you know (amount, date/time, UTR, bank) and paste the scammer's message; ScamShield writes a complaint for 1930 / cybercrime.gov.in / your bank, with the scammer's phone numbers, UPI IDs, links and emails extracted automatically and links defanged. Copy or download it as a `.txt`. Nothing is sent anywhere. API: `GET /api/v1/emergency/guide`, `POST /api/v1/emergency/complaint-draft`.
+- **Check before you pay (community reports)**: look up any phone number, UPI ID, website or email to see whether other users reported it (`GET /api/v1/community/lookup?q=`). Logged-in users can report one (`POST /api/v1/community/reports`) or report every detail from a scam scan in one tap (`POST /api/v1/community/reports/from-analysis/{id}`). Every scan checks the message against reports: 1–2 reports make it at least SUSPICIOUS, 3+ make it SCAM. Safeguards: login required, one report per user per identifier, official brand domains and link shorteners can't be reported, and results always say reports are unverified.
+- **Digital-arrest scam detection**: flags fake police / CBI / customs calls that threaten "digital arrest", demand secrecy and a "verification" transfer, with advice that no agency arrests anyone over video call.
+
 ## 🧠 Risk Scoring Engine Formula
 
 The Risk Engine combines signals to eliminate false negatives:

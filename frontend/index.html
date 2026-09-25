@@ -41,7 +41,7 @@
   <!-- Header / Navigation Bar (Stitch Design)                                  -->
   <!-- ========================================================================= -->
   <header class="fixed top-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-md border-b border-surface-container shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
-    <div class="h-16 max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between gap-4">
+    <div class="h-16 max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between gap-2 sm:gap-4">
       
       <!-- Brand Logo & Title -->
       <div class="flex items-center gap-3 flex-shrink-0 cursor-pointer" onclick="navigateTo('home')">
@@ -50,7 +50,7 @@
         </div>
         <div class="flex flex-col">
           <span class="font-headline text-lg font-bold text-on-surface tracking-tight leading-none">ScamShield AI</span>
-          <span class="text-[10px] text-on-surface-variant font-medium">FinSec Fraud Intelligence</span>
+          <span class="hidden sm:block text-[10px] text-on-surface-variant font-medium">FinSec Fraud Intelligence</span>
         </div>
         <span class="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container text-primary text-xs font-semibold border border-outline-variant/30 ml-2">
           <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
@@ -72,6 +72,9 @@
         <button id="nav-history" onclick="navigateTo('history')" class="px-3.5 py-1.5 rounded-full transition-all hover:text-on-surface hover:bg-surface-container inline-flex items-center gap-1.5">
           History
           <span id="nav-history-count" class="px-1.5 py-0.2 rounded-full bg-surface-container text-on-surface-variant text-xs">0</span>
+        </button>
+        <button id="nav-community" onclick="navigateTo('community')" title="Check a number, UPI ID or website before paying, and report scammers" class="px-3.5 py-1.5 rounded-full transition-all hover:text-on-surface hover:bg-surface-container whitespace-nowrap">
+          Check UPI
         </button>
         <button id="nav-quiz" onclick="navigateTo('quiz')" class="px-3.5 py-1.5 rounded-full transition-all hover:text-on-surface hover:bg-surface-container">
           Quiz
@@ -95,17 +98,18 @@
           </button>
         </div>
 
-        <!-- 1930 Emergency Helpline Pill -->
-        <a href="tel:1930" title="National Cyber Crime Helpline (India)" class="hidden xl:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-error-container/50 border border-error/20 text-error text-xs font-bold hover:bg-error-container transition-all">
-          <span class="material-symbols-outlined text-[16px] text-error">phone_in_talk</span>
-          <span>Helpline 1930</span>
-        </a>
+        <!-- Emergency: "I've been scammed" -->
+        <button id="btn-emergency" onclick="navigateTo('emergency')" title="Lost money or shared details? Get step-by-step help" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-error text-on-error text-xs font-bold shadow-sm hover:bg-red-700 transition-all">
+          <span class="material-symbols-outlined text-[16px]">emergency</span>
+          <span class="sm:hidden">Help</span>
+          <span class="hidden sm:inline whitespace-nowrap">Scammed?</span>
+        </button>
 
         <!-- User Authentication & Profile Pill -->
         <div id="auth-section" class="flex items-center gap-2 pl-2 border-l border-surface-container">
           <button id="auth-btn" onclick="openAuthModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary text-on-primary text-xs font-semibold shadow-sm hover:bg-primary-container transition-all">
             <span class="material-symbols-outlined text-[16px]">account_circle</span>
-            <span id="auth-btn-label">Login</span>
+            <span id="auth-btn-label" class="hidden sm:inline">Login</span>
           </button>
         </div>
 
@@ -130,8 +134,8 @@
             <span class="material-symbols-outlined text-[20px] material-symbols-fill">warning</span>
           </span>
           <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 min-w-0">
-            <span class="text-xs uppercase tracking-wider bg-error text-on-error px-2 py-0.5 rounded-full font-bold shrink-0">Live Alert</span>
-            <span id="home-alert-text" class="text-sm font-medium text-on-error-container truncate">
+            <span class="text-xs uppercase tracking-wider bg-error text-on-error px-2 py-0.5 rounded-full font-bold shrink-0 self-start sm:self-auto">Live Alert</span>
+            <span id="home-alert-text" class="text-sm font-medium text-on-error-container md:truncate">
               Surge in fake electricity bill & bank KYC SMS APK scams reported this week. Stay alert.
             </span>
           </div>
@@ -169,6 +173,22 @@
             <button onclick="navigateTo('upload')" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-surface-container-lowest text-on-surface font-semibold text-sm shadow-sm border border-outline-variant/30 hover:bg-surface-container hover:shadow transition-all">
               <span class="material-symbols-outlined text-[20px] text-primary">add_photo_alternate</span>
               <span id="hero-btn-upload">Upload Screenshot</span>
+            </button>
+          </div>
+
+          <!-- Quick help tiles -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 -mt-2">
+            <button onclick="navigateTo('community')" class="text-left p-3 rounded-xl bg-surface-container-lowest border border-surface-container shadow-sm hover:shadow transition-all">
+              <span class="flex items-center gap-1.5 text-xs font-bold text-primary"><span class="material-symbols-outlined text-[18px]">person_search</span>Check before you pay</span>
+              <span class="block text-[11px] text-on-surface-variant mt-1">Has this number, UPI ID or website been reported?</span>
+            </button>
+            <button onclick="navigateTo('emergency')" class="text-left p-3 rounded-xl bg-error-container/60 border border-error/20 shadow-sm hover:shadow transition-all">
+              <span class="flex items-center gap-1.5 text-xs font-bold text-error"><span class="material-symbols-outlined text-[18px]">emergency</span>Already scammed?</span>
+              <span class="block text-[11px] text-on-error-container mt-1">First-hour steps and a ready complaint for 1930.</span>
+            </button>
+            <button onclick="navigateTo('quiz')" class="text-left p-3 rounded-xl bg-surface-container-lowest border border-surface-container shadow-sm hover:shadow transition-all">
+              <span class="flex items-center gap-1.5 text-xs font-bold text-primary"><span class="material-symbols-outlined text-[18px]">quiz</span>Spot the scam</span>
+              <span class="block text-[11px] text-on-surface-variant mt-1">Practise on real-style messages in 2 minutes.</span>
             </button>
           </div>
 
@@ -790,9 +810,17 @@
             <span class="material-symbols-outlined text-[16px]">add</span>
             <span>Scan Another Message</span>
           </button>
+          <button id="btn-report-community" onclick="reportFromCurrentAnalysis()" class="hidden px-4 py-2 rounded-full bg-surface-container-lowest hover:bg-surface-container text-xs font-bold text-on-surface flex items-center gap-1.5 shadow-sm border border-outline-variant/30 transition-all">
+            <span class="material-symbols-outlined text-[16px]">campaign</span>
+            <span>Report Scammer Details</span>
+          </button>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
+          <button id="btn-emergency-from-result" onclick="openEmergencyFromResult()" class="hidden px-4 py-2 rounded-full bg-amber-400 text-amber-950 hover:bg-amber-500 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all">
+            <span class="material-symbols-outlined text-[16px]">emergency</span>
+            <span>Already paid or shared details?</span>
+          </button>
           <button id="btn-warn-family" onclick="warnFamilyOnWhatsApp()" class="hidden px-4 py-2 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all">
             <span class="material-symbols-outlined text-[16px]">family_restroom</span>
             <span>Warn Family on WhatsApp</span>
@@ -871,6 +899,117 @@
         </button>
       </div>
 
+    </section>
+
+    <!-- ----------------------------------------------------------------------- -->
+    <!-- Emergency: I've been scammed                                             -->
+    <!-- ----------------------------------------------------------------------- -->
+    <section id="view-emergency" class="hidden fade-in max-w-6xl mx-auto px-4 sm:px-8 py-8 w-full">
+      <div class="rounded-xl bg-error text-on-error p-6 sm:p-8 shadow-xl mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 class="font-headline text-2xl sm:text-3xl font-extrabold tracking-tight flex items-center gap-2">
+            <span class="material-symbols-outlined text-[32px]">emergency</span>Scammed? Act now.
+          </h1>
+          <p class="text-sm mt-2 max-w-2xl opacity-95">Lost money or shared your OTP, PIN or card details? Speed matters: money reported in the first hours has the best chance of being frozen. Follow the steps below, then use the complaint draft to file quickly.</p>
+        </div>
+        <a href="tel:1930" class="shrink-0 px-6 py-3 rounded-full bg-on-error text-error font-extrabold text-lg flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] transition-transform">
+          <span class="material-symbols-outlined text-[24px]">call</span>Call 1930
+        </a>
+      </div>
+
+      <div class="mb-6">
+        <div class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">What happened?</div>
+        <div id="emergency-incident-chips" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-6 bg-surface-container-lowest rounded-xl p-6 shadow-md border border-surface-container">
+          <h3 class="font-headline text-base font-bold text-on-surface flex items-center gap-2 mb-1">
+            <span class="material-symbols-outlined text-error text-[22px]">checklist</span>Your action plan
+          </h3>
+          <p class="text-[11px] text-on-surface-variant mb-4">Tick steps off as you go. Your progress is saved on this device.</p>
+          <div id="emergency-steps" class="space-y-3"></div>
+        </div>
+
+        <div class="lg:col-span-6 bg-surface-container-lowest rounded-xl p-6 shadow-md border border-surface-container">
+          <h3 class="font-headline text-base font-bold text-on-surface flex items-center gap-2 mb-1">
+            <span class="material-symbols-outlined text-primary text-[22px]">description</span>Complaint draft for 1930 / cybercrime.gov.in / your bank
+          </h3>
+          <p class="text-[11px] text-on-surface-variant mb-4">Fill in what you know; leave the rest blank. The scammer's number, UPI ID and links are picked out of the message automatically. Nothing is sent anywhere.</p>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <label class="flex flex-col gap-1 font-semibold text-on-surface-variant">Amount lost (₹)
+              <input id="em-amount" type="number" min="0" step="1" placeholder="e.g. 25000" class="px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant/40 text-on-surface font-normal"/>
+            </label>
+            <label class="flex flex-col gap-1 font-semibold text-on-surface-variant">Date &amp; time
+              <input id="em-datetime" type="datetime-local" class="px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant/40 text-on-surface font-normal"/>
+            </label>
+            <label class="flex flex-col gap-1 font-semibold text-on-surface-variant">Paid using
+              <input id="em-method" type="text" placeholder="e.g. PhonePe UPI, debit card" class="px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant/40 text-on-surface font-normal"/>
+            </label>
+            <label class="flex flex-col gap-1 font-semibold text-on-surface-variant">Your bank
+              <input id="em-bank" type="text" placeholder="e.g. SBI, a/c ending 1234" class="px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant/40 text-on-surface font-normal"/>
+            </label>
+            <label class="col-span-2 flex flex-col gap-1 font-semibold text-on-surface-variant">Transaction ID(s) / UTR (comma separated)
+              <input id="em-txn" type="text" placeholder="12-digit UPI reference from your payment app or bank SMS" class="px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant/40 text-on-surface font-normal"/>
+            </label>
+            <label class="col-span-2 flex flex-col gap-1 font-semibold text-on-surface-variant">Your name &amp; mobile
+              <input id="em-name" type="text" placeholder="Name, mobile number" class="px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant/40 text-on-surface font-normal"/>
+            </label>
+            <label class="col-span-2 flex flex-col gap-1 font-semibold text-on-surface-variant">What happened (your words)
+              <textarea id="em-desc" rows="2" placeholder="How were you contacted and what were you asked to do?" class="px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant/40 text-on-surface font-normal"></textarea>
+            </label>
+            <label class="col-span-2 flex flex-col gap-1 font-semibold text-on-surface-variant">The scammer's message (paste it)
+              <textarea id="em-message" rows="3" placeholder="Paste the SMS / WhatsApp text here" class="px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant/40 text-on-surface font-normal"></textarea>
+            </label>
+          </div>
+          <button onclick="generateComplaintDraft()" class="mt-4 w-full px-4 py-2.5 rounded-full bg-primary text-on-primary hover:bg-primary-container text-sm font-bold flex items-center justify-center gap-2 shadow-sm">
+            <span class="material-symbols-outlined text-[18px]">edit_document</span>Create complaint draft
+          </button>
+          <div id="em-draft-section" class="hidden mt-4">
+            <textarea id="em-draft" rows="14" readonly class="w-full p-3 rounded-lg bg-surface-container-low border border-outline-variant/40 text-[11px] font-code text-on-surface leading-relaxed"></textarea>
+            <div class="flex flex-wrap gap-2 mt-2">
+              <button onclick="copyComplaintDraft()" class="px-3.5 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-primary font-bold text-xs flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">content_copy</span>Copy</button>
+              <button onclick="downloadComplaintDraft()" class="px-3.5 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-primary font-bold text-xs flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">download</span>Download .txt</button>
+              <a href="https://cybercrime.gov.in" target="_blank" rel="noopener" class="px-3.5 py-1.5 rounded-full bg-error text-on-error font-bold text-xs flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">open_in_new</span>File at cybercrime.gov.in</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ----------------------------------------------------------------------- -->
+    <!-- Community: check before you pay / report a scammer                      -->
+    <!-- ----------------------------------------------------------------------- -->
+    <section id="view-community" class="hidden fade-in max-w-4xl mx-auto px-4 sm:px-8 py-8 w-full">
+      <h1 class="font-headline text-3xl font-extrabold text-on-surface tracking-tight">Check before you pay</h1>
+      <p class="text-sm text-on-surface-variant mt-1 mb-6">Paying a stranger or got an odd call? Check whether their phone number, UPI ID, website or email has been reported by other ScamShield users.</p>
+
+      <div class="bg-surface-container-lowest rounded-xl p-6 shadow-md border border-surface-container mb-6">
+        <form onsubmit="event.preventDefault(); lookupIdentifier();" class="flex flex-col sm:flex-row gap-2">
+          <input id="community-query" type="text" placeholder="e.g. 98765 43210, name@ybl, sbi-kyc-update.xyz" class="flex-1 px-4 py-2.5 rounded-full bg-surface-container-low border border-outline-variant/40 text-sm text-on-surface"/>
+          <button type="submit" class="px-5 py-2.5 rounded-full bg-primary text-on-primary hover:bg-primary-container text-sm font-bold flex items-center justify-center gap-1.5"><span class="material-symbols-outlined text-[18px]">search</span>Check</button>
+        </form>
+        <div id="community-result" class="mt-4"></div>
+      </div>
+
+      <div class="bg-surface-container-lowest rounded-xl p-6 shadow-md border border-surface-container">
+        <h3 class="font-headline text-base font-bold text-on-surface flex items-center gap-2 mb-1">
+          <span class="material-symbols-outlined text-error text-[22px]">campaign</span>Report a scammer
+        </h3>
+        <p class="text-[11px] text-on-surface-variant mb-4">Login required, and one report per person per number, so counts can't be faked. Official bank and company websites can't be reported.</p>
+        <form onsubmit="event.preventDefault(); submitCommunityReport();" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <label class="flex flex-col gap-1 font-semibold text-on-surface-variant sm:col-span-2">Phone number, UPI ID, website or email
+            <input id="report-identifier" type="text" required minlength="3" class="px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant/40 text-on-surface font-normal text-sm"/>
+          </label>
+          <label class="flex flex-col gap-1 font-semibold text-on-surface-variant">Type of scam
+            <select id="report-category" class="px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant/40 text-on-surface font-normal"></select>
+          </label>
+          <label class="flex flex-col gap-1 font-semibold text-on-surface-variant">Short note (optional)
+            <input id="report-note" type="text" maxlength="500" placeholder="e.g. Called pretending to be SBI" class="px-3 py-2 rounded-lg bg-surface-container-low border border-outline-variant/40 text-on-surface font-normal"/>
+          </label>
+          <button type="submit" class="sm:col-span-2 px-4 py-2.5 rounded-full bg-error text-on-error hover:bg-red-700 text-sm font-bold flex items-center justify-center gap-1.5"><span class="material-symbols-outlined text-[18px]">flag</span>Submit report</button>
+        </form>
+      </div>
     </section>
 
     <!-- ----------------------------------------------------------------------- -->

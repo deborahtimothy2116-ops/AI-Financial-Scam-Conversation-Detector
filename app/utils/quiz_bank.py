@@ -84,6 +84,12 @@ QUIZ_BANK = [
         "answer": "SCAM",
         "lesson": "Read the end of the address: this is 'account-verify.shop' with 'apple.com' pasted in front of it.",
     },
+    {
+        "id": "q14", "channel": "WhatsApp video call", "sender": "+91 89XXX 20417 (profile photo: police logo)",
+        "message": "This is CBI. A parcel containing drugs was booked on your Aadhaar. You are under digital arrest. Stay on the video call, do not tell your family, and transfer your savings to the RBI verification account.",
+        "answer": "SCAM",
+        "lesson": "There is no 'digital arrest' in Indian law. Police and CBI never arrest over video calls or ask you to move money. Hang up and call 1930.",
+    },
 ]
 
 QUIZ_BY_ID = {q["id"]: q for q in QUIZ_BANK}

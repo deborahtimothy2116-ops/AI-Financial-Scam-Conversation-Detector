@@ -113,7 +113,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // Navigation & Router
 // ---------------------------------------------------------------------------
 function navigateTo(viewName) {
-  const views = ["home", "analyze", "upload", "processing", "result", "history", "quiz", "settings"];
+  const views = ["home", "analyze", "upload", "processing", "result", "history", "community", "quiz", "emergency", "settings"];
   views.forEach((v) => {
     const el = document.getElementById(`view-${v}`);
     if (el) el.classList.add("hidden");
@@ -141,6 +141,12 @@ function navigateTo(viewName) {
   }
   if (viewName === "quiz" && !state.quiz) {
     startQuiz();
+  }
+  if (viewName === "emergency" && !state.emergencyGuide) {
+    loadEmergencyGuide(state.emergencyIncident || "upi_payment");
+  }
+  if (viewName === "community") {
+    initCommunityView();
   }
 }
 
@@ -666,6 +672,8 @@ function renderResultView(analysis) {
   document.getElementById("result-highlight-legend").classList.toggle("hidden", highlights.length === 0);
   renderLinkXray(analysis.link_xray || []);
   document.getElementById("btn-warn-family").classList.toggle("hidden", verdict === "SAFE");
+  document.getElementById("btn-report-community").classList.toggle("hidden", verdict === "SAFE");
+  document.getElementById("btn-emergency-from-result").classList.toggle("hidden", verdict === "SAFE");
   document.getElementById("result-input-source-badge").textContent = analysis.input_type === "screenshot" ? "Screenshot OCR" : "Message Text";
   document.getElementById("result-scan-id-label").textContent = `Scan #${(analysis.analysis_id || analysis.id || "REC").slice(0, 8)}`;
   document.getElementById("result-analysis-mode-label").textContent = analysis.analysis_mode === "fallback_rules" ? "Heuristic Rules Mode" : "AI + Rules Active";
@@ -1074,6 +1082,267 @@ function warnFamilyOnWhatsApp() {
     "If you get something similar: don't click links, don't pay, and never share OTP, PIN or passwords. Report fraud by calling 1930 or at cybercrime.gov.in",
   ].filter(Boolean).join("\n\n");
   window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+}
+
+// ---------------------------------------------------------------------------
+// Emergency: "I've been scammed"
+// ---------------------------------------------------------------------------
+const PRIORITY_STYLES = {
+  now: { chip: "bg-error text-on-error", label: "DO NOW" },
+  today: { chip: "bg-amber-400 text-amber-950", label: "TODAY" },
+  later: { chip: "bg-surface-container-high text-on-surface-variant", label: "NEXT DAYS" },
+};
+
+function emergencyProgressKey(incident) {
+  return `scamshield_emergency_done_${incident}`;
+}
+
+function loadEmergencyProgress(incident) {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(emergencyProgressKey(incident)) || "[]"));
+  } catch (e) {
+    return new Set();
+  }
+}
+
+function saveEmergencyProgress(incident, done) {
+  try {
+    localStorage.setItem(emergencyProgressKey(incident), JSON.stringify([...done]));
+  } catch (e) {
+    // Progress is a convenience; ignore storage failures.
+  }
+}
+
+async function loadEmergencyGuide(incident) {
+  state.emergencyIncident = incident;
+  const stepsEl = document.getElementById("emergency-steps");
+  stepsEl.innerHTML = `<div class="text-xs text-on-surface-variant">Loading steps...</div>`;
+  try {
+    const res = await fetch(`${state.apiBaseUrl}/emergency/guide?incident_type=${encodeURIComponent(incident)}`);
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || "Could not load steps");
+    state.emergencyGuide = data.data;
+    renderEmergencyGuide();
+  } catch (err) {
+    stepsEl.innerHTML = `<div class="text-xs text-error font-semibold">Could not load steps: ${escapeHtml(err.message)}. Call 1930 now.</div>`;
+  }
+}
+
+function renderEmergencyGuide() {
+  const guide = state.emergencyGuide;
+  const done = loadEmergencyProgress(guide.incident_type);
+
+  document.getElementById("emergency-incident-chips").innerHTML = Object.entries(guide.incident_types)
+    .map(([key, label]) => `
+      <button onclick="loadEmergencyGuide('${escapeHtml(key)}')" class="px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+        key === guide.incident_type ? "bg-error text-on-error border-error" : "bg-surface-container-lowest text-on-surface border-outline-variant/40 hover:bg-surface-container"
+      }">${escapeHtml(label)}</button>`)
+    .join("");
+
+  document.getElementById("emergency-steps").innerHTML = guide.steps
+    .map((step, i) => {
+      const p = PRIORITY_STYLES[step.priority] || PRIORITY_STYLES.later;
+      const checked = done.has(step.title);
+      const action = step.action
+        ? `<a href="${escapeHtml(step.action.href)}" ${step.action.href.startsWith("http") ? 'target="_blank" rel="noopener"' : ""} class="inline-flex items-center gap-1 mt-2 px-3 py-1 rounded-full bg-primary text-on-primary text-[11px] font-bold"><span class="material-symbols-outlined text-[14px]">${step.action.href.startsWith("tel:") ? "call" : "open_in_new"}</span>${escapeHtml(step.action.label)}</a>`
+        : "";
+      return `
+        <label class="flex items-start gap-3 p-3 rounded-lg border ${checked ? "bg-emerald-50 border-emerald-300" : "bg-surface-container-low border-surface-container"} cursor-pointer">
+          <input type="checkbox" ${checked ? "checked" : ""} onchange="toggleEmergencyStep(${i}, this.checked)" class="mt-1 w-4 h-4 accent-emerald-600 shrink-0"/>
+          <span class="flex-1 min-w-0">
+            <span class="flex items-center gap-2 flex-wrap">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${p.chip}">${p.label}</span>
+              <span class="text-sm font-bold text-on-surface ${checked ? "line-through opacity-60" : ""}">${escapeHtml(step.title)}</span>
+            </span>
+            <span class="block text-xs text-on-surface-variant mt-1 leading-relaxed">${escapeHtml(step.detail)}</span>
+            ${action}
+          </span>
+        </label>`;
+    })
+    .join("");
+}
+
+function toggleEmergencyStep(index, checked) {
+  const guide = state.emergencyGuide;
+  const done = loadEmergencyProgress(guide.incident_type);
+  const title = guide.steps[index].title;
+  checked ? done.add(title) : done.delete(title);
+  saveEmergencyProgress(guide.incident_type, done);
+  renderEmergencyGuide();
+}
+
+// From a result: carry the scanned message into the emergency form.
+function openEmergencyFromResult() {
+  const a = state.currentAnalysis;
+  if (a) {
+    document.getElementById("em-message").value = a.raw_text || "";
+    state.emergencyScamType = a.category_title || null;
+    const category = String(a.scam_category || "");
+    const incident = category.includes("OTP") ? "otp_shared"
+      : category.includes("INVESTMENT") ? "investment"
+      : (a.indicators || []).some((i) => i.rule_id === "RULE_DIGITAL_ARREST") ? "digital_arrest"
+      : "upi_payment";
+    state.emergencyGuide = null;
+    state.emergencyIncident = incident;
+  }
+  navigateTo("emergency");
+}
+
+async function generateComplaintDraft() {
+  const val = (id) => document.getElementById(id).value.trim();
+  const amount = parseFloat(val("em-amount"));
+  const payload = {
+    incident_type: state.emergencyIncident || "upi_payment",
+    amount_lost: Number.isFinite(amount) && amount > 0 ? amount : null,
+    incident_datetime: val("em-datetime") || null,
+    payment_method: val("em-method") || null,
+    transaction_ids: val("em-txn").split(/[,\s]+/).filter(Boolean),
+    complainant_name: val("em-name") || null,
+    bank_name: val("em-bank") || null,
+    description: val("em-desc") || null,
+    message_text: val("em-message") || null,
+    scam_type: state.emergencyScamType || null,
+  };
+  try {
+    const res = await fetch(`${state.apiBaseUrl}/emergency/complaint-draft`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || "Could not create the draft");
+    document.getElementById("em-draft").value = data.data.draft_text;
+    document.getElementById("em-draft-section").classList.remove("hidden");
+    document.getElementById("em-draft").scrollIntoView({ behavior: "smooth", block: "center" });
+  } catch (err) {
+    showToast("Could not create the complaint draft: " + err.message, "error");
+  }
+}
+
+function copyComplaintDraft() {
+  navigator.clipboard.writeText(document.getElementById("em-draft").value).then(() => showToast("Complaint copied. Paste it into the portal or an email to your bank.", "success"));
+}
+
+function downloadComplaintDraft() {
+  const blob = new Blob([document.getElementById("em-draft").value], { type: "text/plain;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `fraud-complaint-${new Date().toISOString().slice(0, 10)}.txt`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+// ---------------------------------------------------------------------------
+// Community: check before you pay / report a scammer
+// ---------------------------------------------------------------------------
+const REPORT_CATEGORIES = [
+  ["", "Not sure"],
+  ["PHISHING_CREDENTIAL_HARVESTING", "Fake KYC / bank phishing"],
+  ["UPI_QR_SCAM", "UPI / QR code payment trap"],
+  ["URGENT_IMPERSONATION", "Fake police / official / digital arrest"],
+  ["OTP_REMOTE_ACCESS_SCAM", "OTP theft / remote access"],
+  ["LOTTERY_PRIZE_SCAM", "Lottery / prize"],
+  ["JOB_OFFER_TASK_FRAUD", "Part-time job / task"],
+  ["INVESTMENT_CRYPTO_PONZI", "Investment / trading / crypto"],
+  ["MARKETPLACE_ADVANCE_FEE", "OLX / marketplace advance"],
+  ["LOAN_APP_EXTORTION", "Loan app harassment"],
+  ["ROMANCE_PIG_BUTCHERING", "Romance / friendship"],
+  ["SUSPICIOUS_UNKNOWN", "Other"],
+];
+const LOOKUP_STYLES = {
+  strongly_reported: { box: "bg-error-container border-error/30 text-on-error-container", icon: "dangerous", title: "Reported as a scam" },
+  reported: { box: "bg-amber-50 border-amber-300 text-amber-950", icon: "warning", title: "Reported by the community" },
+  official: { box: "bg-emerald-50 border-emerald-300 text-emerald-900", icon: "verified", title: "Official website" },
+  no_reports: { box: "bg-surface-container-low border-surface-container text-on-surface", icon: "info", title: "No reports yet" },
+};
+
+function initCommunityView() {
+  const select = document.getElementById("report-category");
+  if (!select.options.length) {
+    select.innerHTML = REPORT_CATEGORIES.map(([v, l]) => `<option value="${v}">${escapeHtml(l)}</option>`).join("");
+  }
+}
+
+async function lookupIdentifier() {
+  const q = document.getElementById("community-query").value.trim();
+  const out = document.getElementById("community-result");
+  if (!q) return;
+  out.innerHTML = `<div class="text-xs text-on-surface-variant">Checking...</div>`;
+  try {
+    const res = await fetch(`${state.apiBaseUrl}/community/lookup?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || "Lookup failed");
+    const r = data.data;
+    const s = LOOKUP_STYLES[r.status] || LOOKUP_STYLES.no_reports;
+    const labels = Object.fromEntries(REPORT_CATEGORIES);
+    const cats = Object.entries(r.categories || {})
+      .map(([c, n]) => `<span class="px-2 py-0.5 rounded-full bg-surface-container-lowest/70 text-[11px] font-semibold">${escapeHtml(labels[c] || c)} &times; ${n}</span>`)
+      .join(" ");
+    const last = r.last_reported ? new Date(r.last_reported).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : null;
+    out.innerHTML = `
+      <div class="p-4 rounded-xl border ${s.box}">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <div class="flex items-center gap-2 font-bold text-sm"><span class="material-symbols-outlined text-[22px]">${s.icon}</span>${s.title}</div>
+          <span class="font-code text-xs font-semibold">${escapeHtml(r.identifier_type.toUpperCase())}: ${escapeHtml(r.identifier)}</span>
+        </div>
+        ${r.report_count ? `<div class="text-2xl font-extrabold mt-2">${r.report_count} report${r.report_count === 1 ? "" : "s"}</div>` : ""}
+        <p class="text-xs mt-1 leading-relaxed">${escapeHtml(r.advice)}</p>
+        ${cats ? `<div class="flex flex-wrap gap-1.5 mt-2">${cats}</div>` : ""}
+        ${last ? `<div class="text-[11px] opacity-80 mt-2">Last reported ${escapeHtml(last)}</div>` : ""}
+      </div>`;
+    if (r.status !== "official") document.getElementById("report-identifier").value = q;
+  } catch (err) {
+    out.innerHTML = `<div class="text-xs text-error font-semibold">${escapeHtml(err.message)}</div>`;
+  }
+}
+
+async function submitCommunityReport() {
+  if (!state.token) {
+    showToast("Please log in to report. It keeps reports trustworthy.", "info");
+    openAuthModal("login");
+    return;
+  }
+  const payload = {
+    identifier: document.getElementById("report-identifier").value.trim(),
+    scam_category: document.getElementById("report-category").value || null,
+    note: document.getElementById("report-note").value.trim() || null,
+  };
+  try {
+    const res = await fetch(`${state.apiBaseUrl}/community/reports`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${state.token}` },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || "Report failed");
+    showToast(`${data.message} (${data.data.report_count} report${data.data.report_count === 1 ? "" : "s"} in total)`, data.data.created ? "success" : "info");
+    document.getElementById("community-query").value = data.data.identifier;
+    lookupIdentifier();
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+async function reportFromCurrentAnalysis() {
+  const a = state.currentAnalysis;
+  if (!a) return;
+  if (!state.token) {
+    showToast("Please log in to report scammer details.", "info");
+    openAuthModal("login");
+    return;
+  }
+  try {
+    const res = await fetch(`${state.apiBaseUrl}/community/reports/from-analysis/${encodeURIComponent(a.analysis_id || a.id)}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${state.token}` },
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || "Report failed");
+    const list = data.data.map((r) => r.identifier).join(", ");
+    showToast(`${data.message} ${list}`, "success");
+  } catch (err) {
+    showToast(err.message, "error");
+  }
 }
 
 // ---------------------------------------------------------------------------
