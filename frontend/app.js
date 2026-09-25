@@ -113,7 +113,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // Navigation & Router
 // ---------------------------------------------------------------------------
 function navigateTo(viewName) {
-  const views = ["home", "analyze", "upload", "processing", "result", "history", "settings"];
+  const views = ["home", "analyze", "upload", "processing", "result", "history", "quiz", "settings"];
   views.forEach((v) => {
     const el = document.getElementById(`view-${v}`);
     if (el) el.classList.add("hidden");
@@ -138,6 +138,9 @@ function navigateTo(viewName) {
 
   if (viewName === "history") {
     loadHistoryData();
+  }
+  if (viewName === "quiz" && !state.quiz) {
+    startQuiz();
   }
 }
 
@@ -656,9 +659,13 @@ function renderResultView(analysis) {
   document.getElementById("result-confidence-text").textContent = `${conf}%`;
   document.getElementById("result-confidence-bar").style.width = `${conf}%`;
 
-  // Raw Quote
+  // Raw Quote with red-flag highlighting
   const rawText = analysis.raw_text || analysis.cleaned_text || "";
-  document.getElementById("result-raw-text-quote").textContent = `"${rawText}"`;
+  const highlights = analysis.highlights || [];
+  document.getElementById("result-raw-text-quote").innerHTML = renderHighlightedText(rawText, highlights);
+  document.getElementById("result-highlight-legend").classList.toggle("hidden", highlights.length === 0);
+  renderLinkXray(analysis.link_xray || []);
+  document.getElementById("btn-warn-family").classList.toggle("hidden", verdict === "SAFE");
   document.getElementById("result-input-source-badge").textContent = analysis.input_type === "screenshot" ? "Screenshot OCR" : "Message Text";
   document.getElementById("result-scan-id-label").textContent = `Scan #${(analysis.analysis_id || analysis.id || "REC").slice(0, 8)}`;
   document.getElementById("result-analysis-mode-label").textContent = analysis.analysis_mode === "fallback_rules" ? "Heuristic Rules Mode" : "AI + Rules Active";
@@ -963,6 +970,220 @@ function copyAnalysisSummary() {
 
 function reportScamOnline() {
   window.open("https://cybercrime.gov.in", "_blank");
+}
+
+// ---------------------------------------------------------------------------
+// Red-flag Highlighter
+// ---------------------------------------------------------------------------
+const HIGHLIGHT_STYLES = {
+  high: "bg-red-200 text-red-950 border-b-2 border-red-500",
+  medium: "bg-amber-100 text-amber-950 border-b-2 border-amber-500",
+  low: "bg-sky-100 text-sky-950 border-b-2 border-sky-400",
+  safe: "bg-emerald-100 text-emerald-950 border-b-2 border-emerald-500",
+};
+
+// Build escaped HTML for `text` with each highlight span wrapped in a <mark>.
+function renderHighlightedText(text, highlights) {
+  state.activeHighlights = highlights || [];
+  let html = "";
+  let cursor = 0;
+  state.activeHighlights.forEach((h, i) => {
+    if (h.start < cursor || h.end > text.length) return;
+    html += escapeHtml(text.slice(cursor, h.start));
+    const style = HIGHLIGHT_STYLES[h.severity] || HIGHLIGHT_STYLES.low;
+    html += `<mark class="${style} rounded px-0.5 cursor-help" tabindex="0" title="${escapeHtml(h.label + ": " + h.reason)}" onclick="showHighlightReason(${i})">${escapeHtml(text.slice(h.start, h.end))}</mark>`;
+    cursor = h.end;
+  });
+  html += escapeHtml(text.slice(cursor));
+  return html;
+}
+
+function showHighlightReason(index) {
+  const h = (state.activeHighlights || [])[index];
+  if (h) showToast(`${h.label}: ${h.reason}`, h.severity === "safe" ? "success" : "info");
+}
+
+// ---------------------------------------------------------------------------
+// Link X-ray
+// ---------------------------------------------------------------------------
+const XRAY_STYLES = {
+  danger: { chip: "bg-error text-on-error", label: "DANGEROUS", icon: "dangerous", border: "border-error/40" },
+  caution: { chip: "bg-amber-400 text-amber-950", label: "CAUTION", icon: "warning", border: "border-amber-400/60" },
+  unknown: { chip: "bg-surface-container-high text-on-surface-variant", label: "UNVERIFIED", icon: "help", border: "border-outline-variant/40" },
+  safe: { chip: "bg-emerald-600 text-white", label: "OFFICIAL", icon: "verified", border: "border-emerald-400/60" },
+};
+const FLAG_ICON = { high: "error", medium: "warning", low: "info", good: "check_circle", info: "info" };
+const FLAG_COLOR = { high: "text-error", medium: "text-amber-600", low: "text-sky-700", good: "text-emerald-600", info: "text-on-surface-variant" };
+
+function renderLinkXray(reports) {
+  const section = document.getElementById("result-link-xray-section");
+  const list = document.getElementById("result-link-xray-list");
+  list.innerHTML = "";
+  section.classList.toggle("hidden", reports.length === 0);
+
+  reports.forEach((r) => {
+    const s = XRAY_STYLES[r.risk] || XRAY_STYLES.unknown;
+    const flags = r.flags.length
+      ? r.flags.map((f) => `
+          <li class="flex items-start gap-2">
+            <span class="material-symbols-outlined text-[16px] ${FLAG_COLOR[f.severity] || ""} shrink-0 mt-0.5">${FLAG_ICON[f.severity] || "info"}</span>
+            <span><strong class="text-on-surface">${escapeHtml(f.title)}.</strong> ${escapeHtml(f.detail)}</span>
+          </li>`).join("")
+      : `<li class="text-on-surface-variant">No known tricks found, but this is not a recognised official domain. Open the organisation's app or type its address yourself.</li>`;
+    const card = document.createElement("div");
+    card.className = `p-4 rounded-xl bg-surface-container-low border ${s.border}`;
+    card.innerHTML = `
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="min-w-0">
+          <div class="text-[11px] uppercase tracking-wider font-bold text-on-surface-variant">Really goes to</div>
+          <div class="font-code text-sm font-bold text-on-surface break-all">${escapeHtml(r.real_domain)}</div>
+          ${r.looks_like ? `<div class="text-[11px] text-error font-semibold mt-0.5">Made to look like: ${escapeHtml(r.looks_like)}</div>` : ""}
+        </div>
+        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider flex items-center gap-1 shrink-0 ${s.chip}">
+          <span class="material-symbols-outlined text-[14px]">${s.icon}</span>${s.label}
+        </span>
+      </div>
+      <div class="text-[11px] text-on-surface-variant font-code break-all mb-3">${escapeHtml(r.link)}</div>
+      <ul class="space-y-1.5 text-xs text-on-surface-variant">${flags}</ul>`;
+    list.appendChild(card);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Warn Family on WhatsApp
+// ---------------------------------------------------------------------------
+// Make links unclickable in shared text so the warning doesn't spread the scam link.
+function defangLinks(text) {
+  return text.replace(/\b(?:https?:\/\/|www\.)?[\w-]+(?:\.[\w-]+)+(?:\/\S*[^\s.,;:!?)\]])?/gi, (m) =>
+    /[a-z]/i.test(m) && /\.[a-z]{2,}/i.test(m) ? m.replace(/^http/i, "hxxp").replace(/\./g, "[.]") : m
+  );
+}
+
+function warnFamilyOnWhatsApp() {
+  const a = state.currentAnalysis;
+  if (!a) return;
+  const score = Math.round(a.risk ? a.risk.score : a.risk_score || 0);
+  const flags = (a.indicators || []).slice(0, 4).map((i) => i.title).join("; ");
+  const raw = (a.raw_text || "").replace(/\s+/g, " ").trim();
+  const snippet = defangLinks(raw.length > 220 ? raw.slice(0, 220) + "..." : raw);
+  const text = [
+    "⚠️ Scam alert - please be careful!",
+    `I received a message that ScamShield AI rated ${a.verdict || "SUSPICIOUS"} (${score}/100): ${a.category_title || "suspicious message"}.`,
+    flags ? `Red flags: ${flags}.` : "",
+    snippet ? `The message (links disabled): "${snippet}"` : "",
+    "If you get something similar: don't click links, don't pay, and never share OTP, PIN or passwords. Report fraud by calling 1930 or at cybercrime.gov.in",
+  ].filter(Boolean).join("\n\n");
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+}
+
+// ---------------------------------------------------------------------------
+// Spot-the-Scam Quiz
+// ---------------------------------------------------------------------------
+const QUIZ_CHOICES = [
+  { verdict: "SAFE", style: "bg-emerald-600 hover:bg-emerald-700 text-white", icon: "verified_user" },
+  { verdict: "SUSPICIOUS", style: "bg-amber-400 hover:bg-amber-500 text-amber-950", icon: "gpp_maybe" },
+  { verdict: "SCAM", style: "bg-error hover:bg-red-700 text-on-error", icon: "dangerous" },
+];
+
+async function startQuiz() {
+  state.quiz = { questions: [], index: 0, score: 0, answered: false };
+  document.getElementById("quiz-card").innerHTML = `<div class="text-sm text-on-surface-variant">Loading questions...</div>`;
+  try {
+    const res = await fetch(`${state.apiBaseUrl}/quiz/questions?count=5`);
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || "Could not load quiz");
+    state.quiz.questions = data.data;
+    renderQuizQuestion();
+  } catch (err) {
+    state.quiz = null;
+    document.getElementById("quiz-card").innerHTML = `<div class="text-sm text-error font-semibold">Could not load the quiz: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderQuizQuestion() {
+  const q = state.quiz.questions[state.quiz.index];
+  state.quiz.answered = false;
+  document.getElementById("quiz-progress").textContent = `Question ${state.quiz.index + 1} of ${state.quiz.questions.length}`;
+  document.getElementById("quiz-score").textContent = `Score ${state.quiz.score}`;
+  document.getElementById("quiz-card").innerHTML = `
+    <div class="flex items-center gap-2 mb-3 text-xs">
+      <span class="px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant font-bold">${escapeHtml(q.channel)}</span>
+      <span class="text-on-surface-variant">From:</span>
+      <span class="font-code font-semibold text-on-surface break-all">${escapeHtml(q.sender)}</span>
+    </div>
+    <div id="quiz-message" class="p-4 rounded-2xl rounded-tl-sm bg-surface-container-low border border-surface-container text-sm text-on-surface leading-loose mb-6 whitespace-pre-line">${escapeHtml(q.message)}</div>
+    <div class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Your call</div>
+    <div class="grid grid-cols-3 gap-2 sm:gap-3">
+      ${QUIZ_CHOICES.map((c) => `
+        <button onclick="answerQuiz('${c.verdict}')" class="quiz-choice px-3 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm transition-all ${c.style}">
+          <span class="material-symbols-outlined text-[18px]">${c.icon}</span>${c.verdict}
+        </button>`).join("")}
+    </div>
+    <div id="quiz-feedback"></div>`;
+}
+
+async function answerQuiz(guess) {
+  if (!state.quiz || state.quiz.answered) return;
+  state.quiz.answered = true;
+  document.querySelectorAll(".quiz-choice").forEach((b) => (b.disabled = true, b.classList.add("opacity-60")));
+  const q = state.quiz.questions[state.quiz.index];
+  try {
+    const res = await fetch(`${state.apiBaseUrl}/quiz/answer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question_id: q.id, guess }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || "Could not check answer");
+    const r = data.data;
+    if (r.correct) state.quiz.score += 1;
+    document.getElementById("quiz-score").textContent = `Score ${state.quiz.score}`;
+    document.getElementById("quiz-message").innerHTML = renderHighlightedText(q.message, r.highlights);
+
+    const last = state.quiz.index >= state.quiz.questions.length - 1;
+    const flags = r.red_flags.length
+      ? `<div class="flex flex-wrap gap-1.5 mt-3">${r.red_flags.map((f) => `<span class="px-2 py-0.5 rounded-full bg-error-container text-on-error-container text-[11px] font-semibold">${escapeHtml(f)}</span>`).join("")}</div>`
+      : "";
+    document.getElementById("quiz-feedback").innerHTML = `
+      <div class="mt-6 p-4 rounded-xl border ${r.correct ? "bg-emerald-50 border-emerald-300" : "bg-error-container border-error/30"}">
+        <div class="flex items-center gap-2 font-bold text-sm ${r.correct ? "text-emerald-800" : "text-on-error-container"}">
+          <span class="material-symbols-outlined text-[20px]">${r.correct ? "celebration" : "school"}</span>
+          ${r.correct ? "Correct!" : `Not quite. You said ${escapeHtml(r.guess)}.`}
+        </div>
+        <div class="text-sm font-semibold text-on-surface mt-2">${escapeHtml(r.answer_label)}</div>
+        <p class="text-xs text-on-surface-variant mt-1 leading-relaxed">${escapeHtml(r.lesson)}</p>
+        ${flags}
+      </div>
+      <div class="flex justify-end mt-4">
+        <button onclick="${last ? "finishQuiz()" : "nextQuizQuestion()"}" class="px-5 py-2 rounded-full bg-primary text-on-primary hover:bg-primary-container text-xs font-bold flex items-center gap-1.5 shadow-sm">
+          ${last ? "See my score" : "Next message"}<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+        </button>
+      </div>`;
+  } catch (err) {
+    state.quiz.answered = false;
+    showToast("Could not check answer: " + err.message, "error");
+  }
+}
+
+function nextQuizQuestion() {
+  state.quiz.index += 1;
+  renderQuizQuestion();
+}
+
+function finishQuiz() {
+  const { score, questions } = state.quiz;
+  const total = questions.length;
+  const verdict = score === total ? "Scam-proof! You spotted every one." : score >= total - 1 ? "Sharp eyes. Just one slipped past." : "Scammers rely on speed. Slow down, check the sender and the real link.";
+  document.getElementById("quiz-progress").textContent = "Finished";
+  document.getElementById("quiz-card").innerHTML = `
+    <div class="text-center py-6">
+      <span class="material-symbols-outlined text-[48px] text-primary">emoji_events</span>
+      <div class="font-headline text-4xl font-extrabold text-on-surface mt-2">${score} / ${total}</div>
+      <p class="text-sm text-on-surface-variant mt-2">${verdict}</p>
+      <button onclick="startQuiz()" class="mt-6 px-5 py-2 rounded-full bg-primary text-on-primary hover:bg-primary-container text-xs font-bold inline-flex items-center gap-1.5 shadow-sm">
+        <span class="material-symbols-outlined text-[16px]">replay</span>Play again
+      </button>
+    </div>`;
 }
 
 // Escape untrusted text (scanned messages, OCR output, server errors) before inserting as HTML.

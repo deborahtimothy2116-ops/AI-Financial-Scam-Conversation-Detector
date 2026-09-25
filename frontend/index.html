@@ -73,6 +73,9 @@
           History
           <span id="nav-history-count" class="px-1.5 py-0.2 rounded-full bg-surface-container text-on-surface-variant text-xs">0</span>
         </button>
+        <button id="nav-quiz" onclick="navigateTo('quiz')" class="px-3.5 py-1.5 rounded-full transition-all hover:text-on-surface hover:bg-surface-container">
+          Quiz
+        </button>
         <button id="nav-settings" onclick="navigateTo('settings')" class="px-3.5 py-1.5 rounded-full transition-all hover:text-on-surface hover:bg-surface-container">
           Settings
         </button>
@@ -712,9 +715,17 @@
 
             <div class="relative p-4 rounded-xl bg-surface-container-low text-on-surface mb-4 border border-surface-container">
               <span class="material-symbols-outlined absolute top-2 right-2 text-[32px] text-outline-variant/30 select-none">format_quote</span>
-              <p id="result-raw-text-quote" class="text-sm text-on-surface leading-relaxed relative z-10 pr-6 italic">
+              <p id="result-raw-text-quote" class="text-sm text-on-surface leading-loose relative z-10 pr-6 whitespace-pre-line">
                 "URGENT! Your bank account will be blocked today. Send ₹2,000 to complete KYC immediately."
               </p>
+            </div>
+            <div id="result-highlight-legend" class="hidden flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-on-surface-variant mb-4 -mt-2">
+              <span class="font-semibold">Red-flag highlighter:</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-200 border border-red-400"></span>Danger</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-amber-100 border border-amber-400"></span>Warning</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-sky-100 border border-sky-300"></span>Worth checking</span>
+              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-100 border border-emerald-400"></span>Official</span>
+              <span class="italic">Hover or tap a highlight to see why.</span>
             </div>
 
             <!-- Extracted Triggers / Entities -->
@@ -727,6 +738,18 @@
           </div>
         </div>
 
+      </div>
+
+      <!-- Link X-ray: where each link really goes -->
+      <div id="result-link-xray-section" class="hidden bg-surface-container-lowest rounded-xl p-6 shadow-md border border-surface-container mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <h3 class="font-headline text-base font-bold text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-[22px]">travel_explore</span>
+            <span>Link X-ray</span>
+          </h3>
+          <span class="text-[11px] text-on-surface-variant">Links are inspected as text only &mdash; never opened.</span>
+        </div>
+        <div id="result-link-xray-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
       </div>
 
       <!-- Why Suspicious & Actionable Recommendations (Stitch Breakdown) -->
@@ -769,7 +792,11 @@
           </button>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="btn-warn-family" onclick="warnFamilyOnWhatsApp()" class="hidden px-4 py-2 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all">
+            <span class="material-symbols-outlined text-[16px]">family_restroom</span>
+            <span>Warn Family on WhatsApp</span>
+          </button>
           <button onclick="reportScamOnline()" class="px-4 py-2 rounded-full bg-error text-on-error hover:bg-red-700 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all">
             <span class="material-symbols-outlined text-[16px]">report</span>
             <span>Report to Cyber Crime (1930)</span>
@@ -844,6 +871,25 @@
         </button>
       </div>
 
+    </section>
+
+    <!-- ----------------------------------------------------------------------- -->
+    <!-- Spot-the-Scam Quiz                                                       -->
+    <!-- ----------------------------------------------------------------------- -->
+    <section id="view-quiz" class="hidden fade-in max-w-3xl mx-auto px-4 sm:px-8 py-8 w-full">
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div>
+          <h1 class="font-headline text-3xl font-extrabold text-on-surface tracking-tight">Spot the Scam</h1>
+          <p class="text-sm text-on-surface-variant mt-1">Practise on real-style messages. Decide: SAFE, SUSPICIOUS or SCAM?</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="quiz-progress" class="text-xs font-semibold text-on-surface-variant">Question 1 of 5</span>
+          <span id="quiz-score" class="px-3 py-1 rounded-full bg-primary-fixed text-primary text-xs font-bold">Score 0</span>
+        </div>
+      </div>
+      <div id="quiz-card" class="bg-surface-container-lowest rounded-xl p-6 sm:p-8 shadow-md border border-surface-container">
+        <div class="text-sm text-on-surface-variant">Loading questions...</div>
+      </div>
     </section>
 
     <!-- ----------------------------------------------------------------------- -->

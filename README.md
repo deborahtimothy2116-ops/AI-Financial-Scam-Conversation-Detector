@@ -220,6 +220,13 @@ Checks behind it, besides the scam-pattern rules (KYC, lottery, QR, OTP, remote 
 - **Urgency, deadlines and threats** ("within 2 hours", "final notice", "will be suspended", penalties).
 - **Writing style**: common phishing misspellings, generic greetings ("Dear Customer") and shouting in capitals or `!!!`.
 
+## 🧪 Extra Features
+
+- **🖍️ Red-flag highlighter**: the original message is shown with each suspicious phrase highlighted by severity (danger / warning / worth checking / official link). Hover or tap a highlight to see why it was flagged. API: `highlights` on every analysis.
+- **🔬 Link X-ray**: every link is dissected offline (never opened) to show where it *really* goes and which trick it uses: the `@` trick (`sbi.co.in@evil.xyz`), a brand placed in front of another domain (`sbi.co.in.verify-kyc.xyz`), look-alike letters from other alphabets (Cyrillic `а` in `pаypal.com`) and punycode, lookalike spellings (`amaz0n`), link shorteners, raw IP addresses, risky domain endings, plain http and login/KYC bait in the path. Official domains are marked as verified. API: `link_xray` on every analysis. Deceptive link structures also raise the risk score.
+- **🎯 Spot-the-Scam quiz**: a practice mode with realistic SMS, WhatsApp and email messages. Guess SAFE / SUSPICIOUS / SCAM, then see the highlighted red flags and a one-line lesson. API: `GET /api/v1/quiz/questions`, `POST /api/v1/quiz/answer`. A test checks that the detector agrees with every quiz answer.
+- **👪 Warn family on WhatsApp**: on a SUSPICIOUS or SCAM result, one tap opens WhatsApp with a ready-written warning (verdict, red flags, the 1930 helpline). Links in the quoted message are defanged (`hxxps://evil[.]xyz`) so sharing the warning never spreads the scam link.
+
 ## 🧠 Risk Scoring Engine Formula
 
 The Risk Engine combines signals to eliminate false negatives:

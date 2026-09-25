@@ -45,6 +45,13 @@ OFFICIAL_DOMAINS: Dict[str, List[str]] = {
     "tneb": ["tnebltd.gov.in", "tangedco.gov.in"],
 }
 
+# Link shorteners hide the destination; they are flagged as such, not as impersonation.
+SHORTENERS = {
+    "bit.ly", "tinyurl.com", "t.co", "cutt.ly", "is.gd", "v.gd", "rb.gy",
+    "shorturl.at", "goo.gl", "tiny.cc", "ow.ly", "buff.ly", "s.id", "t.ly",
+    "rebrand.ly", "shorte.st", "bl.ink", "lnkd.in", "wa.link",
+}
+
 FREE_EMAIL_DOMAINS = {
     "gmail.com", "yahoo.com", "yahoo.in", "outlook.com", "hotmail.com",
     "rediffmail.com", "protonmail.com", "proton.me", "aol.com", "mail.com",
@@ -156,7 +163,7 @@ def _find_domain_mismatch(domains: List[str], brands: List[str]):
     """Return (domain, brand, official_domains, claimed) for the first domain that
     names or imitates a brand without belonging to it, else None."""
     for domain in domains:
-        if domain in FREE_EMAIL_DOMAINS:
+        if domain in FREE_EMAIL_DOMAINS or domain in SHORTENERS:
             continue
         normalized = domain.translate(_LEET).replace("-", "")
         for brand, official in OFFICIAL_DOMAINS.items():

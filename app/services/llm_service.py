@@ -8,6 +8,7 @@ import httpx
 from app.core.config import settings
 from app.core.logging import logger
 from app.core.exceptions import LLMServiceError
+from app.services.link_xray import xray_links
 from app.services.message_checks import run_message_checks
 from app.utils.constants import ScamCategory, IndicatorSeverity, REGEX_PATTERNS
 
@@ -267,7 +268,25 @@ class RuleBasedFallbackProvider(BaseLLMProvider):
         if detected_category == ScamCategory.SAFE_NORMAL_CONVERSATION and checks.category_hint:
             detected_category = checks.category_hint
 
-        # 12. Urgency, deadline and threat keywords check
+        # 12. Link X-ray: structural link tricks (hidden destination, homoglyphs, brand in subdomain, raw IP)
+        deceptive_codes = {"USERINFO_TRICK", "PUNYCODE", "HOMOGLYPH", "BRAND_IN_SUBDOMAIN", "RAW_IP"}
+        for report in xray_links(text):
+            tricks = [f for f in report["flags"] if f["code"] in deceptive_codes]
+            if tricks:
+                indicators.append({
+                    "title": "Deceptive Link Structure",
+                    "description": f"{tricks[0]['title']}: {tricks[0]['detail']}",
+                    "severity": IndicatorSeverity.CRITICAL.value,
+                    "confidence": 0.95,
+                    "snippet": report["link"][:80],
+                    "rule_id": "RULE_DECEPTIVE_LINK",
+                })
+                link_obfuscation_risk = max(link_obfuscation_risk, 98.0)
+                if detected_category == ScamCategory.SAFE_NORMAL_CONVERSATION:
+                    detected_category = ScamCategory.PHISHING_CREDENTIAL_HARVESTING
+                break
+
+        # 13. Urgency, deadline and threat keywords check
         if any(w in cleaned for w in URGENCY_PHRASES):
             urgency_score = max(urgency_score, 75.0)
             if not any(i["rule_id"] == "RULE_FALSE_URGENCY" for i in indicators):

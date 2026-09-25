@@ -204,6 +204,22 @@ class AnalysisResponse(BaseModel):
     def verdict_label(self) -> str:
         return VERDICT_LABELS[self.verdict]
 
+    @computed_field
+    @property
+    def highlights(self) -> List[Dict[str, Any]]:
+        """Suspicious phrases located in raw_text, for inline highlighting."""
+        from app.services.highlighter import find_highlights  # local import avoids a services<->schemas cycle
+
+        return find_highlights(self.raw_text)
+
+    @computed_field
+    @property
+    def link_xray(self) -> List[Dict[str, Any]]:
+        """Per-link breakdown of the real destination and the tricks used."""
+        from app.services.link_xray import xray_links
+
+        return xray_links(self.raw_text)
+
     @model_validator(mode="before")
     @classmethod
     def populate_nested_fields(cls, values: Any) -> Any:
