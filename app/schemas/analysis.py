@@ -222,6 +222,19 @@ class AnalysisResponse(BaseModel):
 
     @computed_field
     @property
+    def pause(self) -> Optional[Dict[str, Any]]:
+        """'Pause before you pay' interruption for SCAM results (None otherwise)."""
+        from app.services.pause_check import build_pause
+
+        return build_pause(
+            self.verdict,
+            [i.rule_id for i in self.indicators if i.rule_id],
+            [c["type"] for c in self.claims],
+            self.category_title if self.verdict == "SCAM" else None,
+        )
+
+    @computed_field
+    @property
     def link_xray(self) -> List[Dict[str, Any]]:
         """Per-link breakdown of the real destination and the tricks used."""
         from app.services.link_xray import xray_links

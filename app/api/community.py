@@ -22,6 +22,7 @@ from app.services.community_service import (
     normalize_identifier,
 )
 from app.services.link_xray import _official_brand
+from app.services.pause_check import build_lookup_pause
 from app.utils.constants import ScamCategory
 
 router = APIRouter(prefix="/community", tags=["Community Scam Reports"])
@@ -38,6 +39,7 @@ class LookupResult(BaseModel):
     last_reported: Optional[datetime] = None
     official_brand: Optional[str] = None
     advice: str
+    pause: Optional[dict] = None
 
 
 class ReportRequest(BaseModel):
@@ -89,7 +91,9 @@ def lookup_identifier(q: str = Query(..., min_length=3, max_length=255), db: Ses
         message="Lookup complete",
         data=LookupResult(query=q, identifier_type=kind, identifier=value, status=status,
                           official_brand=brand.upper() if brand else None,
-                          advice=_advice(status, count, brand.upper() if brand else None), **summary),
+                          advice=_advice(status, count, brand.upper() if brand else None),
+                          pause=build_lookup_pause(value, count) if status == "strongly_reported" else None,
+                          **summary),
     )
 
 

@@ -37,7 +37,105 @@ document.addEventListener("DOMContentLoaded", () => {
   updateHistoryCountBadge();
   registerServiceWorker();
   receiveSharedContent();
+  loadPauseStats();
 });
+
+// ---------------------------------------------------------------------------
+// Pause Before You Pay
+// ---------------------------------------------------------------------------
+function openPause(pause, context) {
+  state.pauseContext = context;
+  state.pauseChecked = new Set();
+  document.getElementById("pause-message").textContent = pause.message;
+  document.getElementById("pause-checklist").innerHTML = pause.checklist
+    .map((item, i) => `
+      <li class="rounded-md border ${item.warning ? "border-red-200 bg-error-container/40" : "border-outline-variant"} p-3">
+        <label class="flex items-start gap-2.5 cursor-pointer text-sm text-on-surface">
+          <input type="checkbox" onchange="togglePauseItem(${i}, this.checked)" class="mt-0.5 w-4 h-4 accent-primary shrink-0"/>
+          <span>${escapeHtml(item.text)}</span>
+        </label>
+        ${item.warning ? `<div class="mt-1.5 ml-6 text-xs text-on-error-container flex gap-1"><span class="material-symbols-outlined text-[16px]">warning</span><span><strong>This message says otherwise:</strong> ${escapeHtml(item.warning)}</span></div>` : ""}
+      </li>`)
+    .join("");
+  state.pauseTotal = pause.checklist.length;
+  state.pauseRemaining = pause.wait_seconds;
+  updatePauseContinue();
+  clearInterval(state.pauseTimer);
+  const total = pause.wait_seconds;
+  const tick = () => {
+    const done = total - state.pauseRemaining;
+    document.getElementById("pause-timer-bar").style.width = `${(done / total) * 100}%`;
+    document.getElementById("pause-timer-text").textContent = state.pauseRemaining > 0 ? `${state.pauseRemaining}s` : "Done";
+    updatePauseContinue();
+    if (state.pauseRemaining <= 0) clearInterval(state.pauseTimer);
+    state.pauseRemaining -= 1;
+  };
+  tick();
+  state.pauseTimer = setInterval(tick, 1000);
+  document.getElementById("pause-modal").classList.remove("hidden");
+  document.addEventListener("keydown", pauseKeyHandler);
+  document.getElementById("pause-stop").focus();
+}
+
+function togglePauseItem(index, checked) {
+  checked ? state.pauseChecked.add(index) : state.pauseChecked.delete(index);
+  updatePauseContinue();
+}
+
+function updatePauseContinue() {
+  const waiting = state.pauseRemaining > 0;
+  const unchecked = state.pauseTotal - state.pauseChecked.size;
+  const ready = !waiting && unchecked === 0;
+  const btn = document.getElementById("pause-continue");
+  btn.disabled = !ready;
+  btn.classList.toggle("opacity-50", !ready);
+  btn.classList.toggle("cursor-not-allowed", !ready);
+  document.getElementById("pause-continue-hint").textContent = ready
+    ? "Only continue if every item is really true."
+    : waiting
+    ? "\"Continue anyway\" unlocks after the cooling-off period and when every item is ticked."
+    : `Tick all ${state.pauseTotal} items to continue anyway (${unchecked} left).`;
+}
+
+function pauseKeyHandler(e) {
+  if (e.key === "Escape") closePause("stopped");
+}
+
+async function closePause(outcome) {
+  if (outcome === "continued" && document.getElementById("pause-continue").disabled) return;
+  clearInterval(state.pauseTimer);
+  document.removeEventListener("keydown", pauseKeyHandler);
+  document.getElementById("pause-modal").classList.add("hidden");
+  const context = state.pauseContext || {};
+  fetch(`${state.apiBaseUrl}/pause/events`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ source: context.source || "scan", outcome, analysis_id: context.analysis_id || null }),
+  }).then(() => loadPauseStats()).catch(() => {});
+
+  if (outcome === "stopped") {
+    showToast("Good call. Don't pay, reply or click. The details below show why.", "success");
+  } else if (outcome === "already_paid") {
+    if (context.source === "scan") openEmergencyFromResult();
+    else navigateTo("emergency");
+  } else {
+    showToast("If you go ahead, pay only through an official app or channel, never through the message.", "info");
+  }
+}
+
+async function loadPauseStats() {
+  try {
+    const res = await fetch(`${state.apiBaseUrl}/pause/stats`);
+    const data = await res.json();
+    if (!res.ok || !data.success || !data.data.paused) return;
+    const s = data.data;
+    document.getElementById("pause-stats-text").textContent =
+      `${s.paused} paused · ${s.stopped} stopped${s.already_paid ? ` · ${s.already_paid} sent for help` : ""}`;
+    document.getElementById("pause-stats").classList.remove("hidden");
+  } catch (e) {
+    // Stats are informational only.
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Installable app: receive messages / screenshots shared from WhatsApp, SMS, Gallery
@@ -418,6 +516,7 @@ async function finishScannerAnimation(scan, analysis) {
   await new Promise((r) => setTimeout(r, 1300));
   renderResultView(analysis);
   navigateTo("result");
+  if (analysis.pause) openPause(analysis.pause, { source: "scan", analysis_id: analysis.analysis_id || analysis.id });
 }
 
 async function startScan() {
@@ -1278,6 +1377,7 @@ async function lookupIdentifier() {
         ${last ? `<div class="text-[11px] opacity-80 mt-2">Last reported ${escapeHtml(last)}</div>` : ""}
       </div>`;
     if (r.status !== "official") document.getElementById("report-identifier").value = q;
+    if (r.pause) openPause(r.pause, { source: "lookup" });
   } catch (err) {
     out.innerHTML = `<div class="text-xs text-error font-semibold">${escapeHtml(err.message)}</div>`;
   }

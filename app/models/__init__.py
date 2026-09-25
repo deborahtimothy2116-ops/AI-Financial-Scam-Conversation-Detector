@@ -7,6 +7,7 @@ from app.models.indicator import Indicator
 from app.models.recommendation import Recommendation
 from app.models.feedback import Feedback
 from app.models.scam_report import ScamReport
+from app.models.pause_event import PauseEvent
 
 __all__ = [
     "Base",
@@ -18,4 +19,5 @@ __all__ = [
     "Recommendation",
     "Feedback",
     "ScamReport",
+    "PauseEvent",
 ]
