@@ -8,6 +8,10 @@
 
 **ScamShield AI** is an intelligent, defensive cybersecurity system engineered to detect and prevent financial fraud from suspicious SMS, WhatsApp, social media messages, and screenshot uploads **BEFORE** the victim makes a payment, scans a deceptive QR code, or shares authentication credentials.
 
+![ScamShield system architecture: client layer, FastAPI API layer, service layer with the scan pipeline, result enrichers and tools, and the data layer, plus external OCR engines, optional AI providers, official channels and CI](docs/architecture.png)
+
+<sub>Architecture diagram: [PNG](docs/architecture.png) · [SVG](docs/architecture.svg) (editable). Regenerate the SVG with `python docs/diagram-src/build_architecture_svg.py`.</sub>
+
 ---
 
 ## 📌 Problem Statement
