@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>ScamShield AI - AI Financial Scam Conversation Detector</title>
+  <title>ScamShield - Is this message a scam?</title>
   <meta name="description" content="Defensive AI cybersecurity platform to detect financial scams in chat messages and screenshots before making payments."/>
   
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230037b0'/%3E%3Cpath d='M16 6l8 3v6c0 5-3.4 9.2-8 11-4.6-1.8-8-6-8-11V9z' fill='white'/%3E%3C/svg%3E"/>
   <!-- Fonts & Material Symbols -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
@@ -32,818 +33,268 @@
       from { opacity: 0; transform: translateY(6px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    /* Scanner */
+    .scanner-window {
+      background-image: linear-gradient(rgba(14,165,233,.07) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(14,165,233,.07) 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+    .scanner-beam {
+      position: absolute; left: 0; right: 0; top: 0; height: 3px; z-index: 3;
+      background: #38bdf8;
+      box-shadow: 0 0 12px 4px rgba(56,189,248,.75), 0 0 40px 12px rgba(56,189,248,.25);
+      animation: scanBeam 1.4s linear infinite;
+    }
+    .scanner-beam::before {
+      content: ""; position: absolute; left: 0; right: 0; bottom: 3px; height: 70px;
+      background: linear-gradient(to top, rgba(56,189,248,.28), rgba(56,189,248,0));
+    }
+    .scanner-beam.done { display: none; }
+    @keyframes scanBeam { from { top: 0; } to { top: calc(100% - 3px); } }
+    .scanner-corner { position: absolute; width: 22px; height: 22px; z-index: 4; border: 0 solid #0ea5e9; }
+    .scanner-corner.tl { top: 8px; left: 8px; border-top-width: 3px; border-left-width: 3px; border-top-left-radius: 6px; }
+    .scanner-corner.tr { top: 8px; right: 8px; border-top-width: 3px; border-right-width: 3px; border-top-right-radius: 6px; }
+    .scanner-corner.bl { bottom: 8px; left: 8px; border-bottom-width: 3px; border-left-width: 3px; border-bottom-left-radius: 6px; }
+    .scanner-corner.br { bottom: 8px; right: 8px; border-bottom-width: 3px; border-right-width: 3px; border-bottom-right-radius: 6px; }
+    .scan-reveal mark { animation: markIn .5s ease both; }
+    @keyframes markIn { from { background-color: transparent; border-color: transparent; } }
   </style>
 </head>
 
 <body class="bg-surface font-body text-on-surface antialiased selection:bg-primary-container selection:text-on-primary min-h-screen flex flex-col">
 
   <!-- ========================================================================= -->
-  <!-- Header / Navigation Bar (Stitch Design)                                  -->
+  <!-- Header                                                                    -->
   <!-- ========================================================================= -->
   <header class="fixed top-0 w-full z-50 bg-surface-container-lowest/95 backdrop-blur-md border-b border-surface-container shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
-    <div class="h-16 max-w-7xl mx-auto px-4 sm:px-8 flex items-center justify-between gap-2 sm:gap-4">
-      
-      <!-- Brand Logo & Title -->
-      <div class="flex items-center gap-3 flex-shrink-0 cursor-pointer" onclick="navigateTo('home')">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center text-on-primary shadow-sm">
+    <div class="h-16 max-w-6xl mx-auto px-4 sm:px-8 flex items-center justify-between gap-2 sm:gap-4">
+      <button class="flex items-center gap-2.5 flex-shrink-0" onclick="navigateTo('scan')" aria-label="ScamShield home">
+        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center text-on-primary shadow-sm">
           <span class="material-symbols-outlined text-[22px] material-symbols-fill">shield_lock</span>
-        </div>
-        <div class="flex flex-col">
-          <span class="font-headline text-lg font-bold text-on-surface tracking-tight leading-none">ScamShield AI</span>
-          <span class="hidden sm:block text-[10px] text-on-surface-variant font-medium">FinSec Fraud Intelligence</span>
-        </div>
-        <span class="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container text-primary text-xs font-semibold border border-outline-variant/30 ml-2">
-          <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
-          <span id="nav-guard-badge">AI Protection Active</span>
         </span>
-      </div>
+        <span class="font-headline text-lg font-bold text-on-surface tracking-tight">ScamShield</span>
+      </button>
 
-      <!-- Main Navigation Links -->
       <nav class="hidden md:flex items-center gap-1 bg-surface-container-low px-1.5 py-1 rounded-full text-sm font-semibold text-on-surface-variant">
-        <button id="nav-home" onclick="navigateTo('home')" class="px-3.5 py-1.5 rounded-full transition-all bg-surface-container-high text-primary font-bold">
-          Home
-        </button>
-        <button id="nav-analyze" onclick="navigateTo('analyze')" class="px-3.5 py-1.5 rounded-full transition-all hover:text-on-surface hover:bg-surface-container">
-          Analyze Message
-        </button>
-        <button id="nav-upload" onclick="navigateTo('upload')" class="px-3.5 py-1.5 rounded-full transition-all hover:text-on-surface hover:bg-surface-container">
-          Upload Screenshot
-        </button>
-        <button id="nav-history" onclick="navigateTo('history')" class="px-3.5 py-1.5 rounded-full transition-all hover:text-on-surface hover:bg-surface-container inline-flex items-center gap-1.5">
+        <button id="nav-scan" onclick="navigateTo('scan')" class="px-4 py-1.5 rounded-full transition-all hover:text-on-surface hover:bg-surface-container">Scan</button>
+        <button id="nav-community" onclick="navigateTo('community')" class="px-4 py-1.5 rounded-full transition-all hover:text-on-surface hover:bg-surface-container whitespace-nowrap">Check UPI</button>
+        <button id="nav-quiz" onclick="navigateTo('quiz')" class="px-4 py-1.5 rounded-full transition-all hover:text-on-surface hover:bg-surface-container">Quiz</button>
+        <button id="nav-history" onclick="navigateTo('history')" class="px-4 py-1.5 rounded-full transition-all hover:text-on-surface hover:bg-surface-container flex items-center gap-1.5">
           History
-          <span id="nav-history-count" class="px-1.5 py-0.2 rounded-full bg-surface-container text-on-surface-variant text-xs">0</span>
-        </button>
-        <button id="nav-community" onclick="navigateTo('community')" title="Check a number, UPI ID or website before paying, and report scammers" class="px-3.5 py-1.5 rounded-full transition-all hover:text-on-surface hover:bg-surface-container whitespace-nowrap">
-          Check UPI
-        </button>
-        <button id="nav-quiz" onclick="navigateTo('quiz')" class="px-3.5 py-1.5 rounded-full transition-all hover:text-on-surface hover:bg-surface-container">
-          Quiz
-        </button>
-        <button id="nav-settings" onclick="navigateTo('settings')" class="px-3.5 py-1.5 rounded-full transition-all hover:text-on-surface hover:bg-surface-container">
-          Settings
+          <span id="nav-history-count" class="px-1.5 rounded-full bg-surface-container text-on-surface-variant text-xs">0</span>
         </button>
       </nav>
 
-      <!-- Right Actions: Language Switcher, Helpline Badge, Auth Button -->
-      <div class="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-        
-        <!-- Bilingual Switcher (EN | தமிழ்) -->
-        <div class="inline-flex items-center p-0.5 rounded-full bg-surface-container text-on-surface-variant text-xs">
-          <button id="btn-lang-en" onclick="setAppLanguage('en')" class="px-2.5 py-1 rounded-full font-bold bg-surface-container-lowest text-on-surface shadow-sm transition-all">
-            EN
-          </button>
-          <span class="text-outline-variant px-0.5">|</span>
-          <button id="btn-lang-ta" onclick="setAppLanguage('ta')" class="px-2.5 py-1 rounded-full font-semibold text-on-surface-variant hover:text-on-surface transition-all">
-            தமிழ்
-          </button>
-        </div>
-
-        <!-- Emergency: "I've been scammed" -->
+      <div class="flex items-center gap-2 flex-shrink-0">
         <button id="btn-emergency" onclick="navigateTo('emergency')" title="Lost money or shared details? Get step-by-step help" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-error text-on-error text-xs font-bold shadow-sm hover:bg-red-700 transition-all">
           <span class="material-symbols-outlined text-[16px]">emergency</span>
-          <span class="sm:hidden">Help</span>
-          <span class="hidden sm:inline whitespace-nowrap">Scammed?</span>
+          <span class="whitespace-nowrap">Scammed?</span>
         </button>
-
-        <!-- User Authentication & Profile Pill -->
-        <div id="auth-section" class="flex items-center gap-2 pl-2 border-l border-surface-container">
-          <button id="auth-btn" onclick="openAuthModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary text-on-primary text-xs font-semibold shadow-sm hover:bg-primary-container transition-all">
+        <div id="auth-section" class="flex items-center">
+          <button id="auth-btn" onclick="openAuthModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container text-primary text-xs font-bold hover:bg-surface-container-high transition-all">
             <span class="material-symbols-outlined text-[16px]">account_circle</span>
             <span id="auth-btn-label" class="hidden sm:inline">Login</span>
           </button>
         </div>
-
       </div>
     </div>
+
+    <!-- Phone navigation (the pill nav above is hidden on small screens) -->
+    <nav class="md:hidden grid grid-cols-4 border-t border-surface-container text-[11px] font-semibold text-on-surface-variant">
+      <button id="mnav-scan" onclick="navigateTo('scan')" class="py-1.5 flex flex-col items-center"><span class="material-symbols-outlined text-[20px]">document_scanner</span>Scan</button>
+      <button id="mnav-community" onclick="navigateTo('community')" class="py-1.5 flex flex-col items-center"><span class="material-symbols-outlined text-[20px]">person_search</span>Check UPI</button>
+      <button id="mnav-quiz" onclick="navigateTo('quiz')" class="py-1.5 flex flex-col items-center"><span class="material-symbols-outlined text-[20px]">quiz</span>Quiz</button>
+      <button id="mnav-history" onclick="navigateTo('history')" class="py-1.5 flex flex-col items-center"><span class="material-symbols-outlined text-[20px]">history</span>History</button>
+    </nav>
   </header>
 
   <!-- ========================================================================= -->
-  <!-- Main View Container                                                       -->
+  <!-- Main                                                                      -->
   <!-- ========================================================================= -->
-  <main class="w-full pt-16 flex-1 bg-surface">
+  <main class="w-full pt-28 md:pt-16 flex-1 bg-surface">
 
     <!-- ----------------------------------------------------------------------- -->
-    <!-- SCREEN 1: Home Dashboard                                               -->
+    <!-- Scan: paste a message or upload a screenshot                             -->
     <!-- ----------------------------------------------------------------------- -->
-    <section id="view-home" class="fade-in max-w-7xl mx-auto px-4 sm:px-8 py-8 w-full">
-      
-      <!-- Live Trust Alert Announcement Bar -->
-      <div class="w-full bg-error-container text-on-error-container rounded-xl p-4 mb-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3 border border-error/20">
-        <div class="flex items-center gap-3 min-w-0">
-          <span class="w-8 h-8 rounded-full bg-error/10 flex items-center justify-center text-error shrink-0">
-            <span class="material-symbols-outlined text-[20px] material-symbols-fill">warning</span>
-          </span>
-          <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 min-w-0">
-            <span class="text-xs uppercase tracking-wider bg-error text-on-error px-2 py-0.5 rounded-full font-bold shrink-0 self-start sm:self-auto">Live Alert</span>
-            <span id="home-alert-text" class="text-sm font-medium text-on-error-container md:truncate">
-              Surge in fake electricity bill & bank KYC SMS APK scams reported this week. Stay alert.
-            </span>
-          </div>
-        </div>
-        <div class="flex items-center gap-3 self-end md:self-auto shrink-0">
-          <span class="text-xs text-error font-bold">1,240+ flags in 24h</span>
-          <button aria-label="Dismiss alert" class="text-on-error-container hover:text-error transition-colors p-1" onclick="this.closest('.bg-error-container').style.display='none'">
-            <span class="material-symbols-outlined text-[18px]">close</span>
-          </button>
-        </div>
+    <section id="view-scan" class="fade-in max-w-3xl mx-auto px-4 sm:px-8 py-8 w-full">
+      <div class="text-center mb-6">
+        <h1 class="font-display text-3xl sm:text-4xl font-extrabold text-on-surface tracking-tight">Is this message a scam?</h1>
+        <p class="text-sm sm:text-base text-on-surface-variant mt-2">Paste a suspicious SMS, WhatsApp or email, or upload a screenshot. You'll get a clear answer in seconds, <strong class="text-on-surface">before</strong> you pay, click or reply.</p>
       </div>
 
-      <!-- Hero Section & Pitch -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-10">
-        
-        <!-- Left: Hero Headline & CTA -->
-        <div class="lg:col-span-6 flex flex-col pt-2">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-high text-primary text-xs font-semibold w-fit mb-4">
-            <span class="material-symbols-outlined text-[16px] material-symbols-fill">security</span>
-            <span id="hero-badge">Next-Gen Conversational Fraud Defense</span>
-          </div>
-          <h1 id="hero-heading" class="font-display text-4xl sm:text-5xl font-extrabold text-on-surface tracking-tight leading-[1.15] mb-4">
-            Stay one step ahead of <span class="text-primary underline decoration-primary-fixed-dim decoration-4 underline-offset-4">financial scams</span>.
-          </h1>
-          <p id="hero-subheading" class="text-base text-on-surface-variant mb-6 max-w-xl leading-relaxed">
-            Analyze suspicious messages before you send money or share sensitive information. Instant AI analysis for SMS, WhatsApp, and chat screenshots with English and Tamil support.
-          </p>
-
-          <!-- Dual Action CTAs -->
-          <div class="flex flex-wrap items-center gap-3 mb-8">
-            <button onclick="navigateTo('analyze')" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-on-primary font-bold text-sm shadow-md hover:bg-primary-container hover:shadow-lg transition-all active:scale-95">
-              <span class="material-symbols-outlined text-[20px]">document_scanner</span>
-              <span id="hero-btn-analyze">Analyze a Message</span>
-            </button>
-            <button onclick="navigateTo('upload')" class="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-surface-container-lowest text-on-surface font-semibold text-sm shadow-sm border border-outline-variant/30 hover:bg-surface-container hover:shadow transition-all">
-              <span class="material-symbols-outlined text-[20px] text-primary">add_photo_alternate</span>
-              <span id="hero-btn-upload">Upload Screenshot</span>
-            </button>
-          </div>
-
-          <!-- Quick help tiles -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 -mt-2">
-            <button onclick="navigateTo('community')" class="text-left p-3 rounded-xl bg-surface-container-lowest border border-surface-container shadow-sm hover:shadow transition-all">
-              <span class="flex items-center gap-1.5 text-xs font-bold text-primary"><span class="material-symbols-outlined text-[18px]">person_search</span>Check before you pay</span>
-              <span class="block text-[11px] text-on-surface-variant mt-1">Has this number, UPI ID or website been reported?</span>
-            </button>
-            <button onclick="navigateTo('emergency')" class="text-left p-3 rounded-xl bg-error-container/60 border border-error/20 shadow-sm hover:shadow transition-all">
-              <span class="flex items-center gap-1.5 text-xs font-bold text-error"><span class="material-symbols-outlined text-[18px]">emergency</span>Already scammed?</span>
-              <span class="block text-[11px] text-on-error-container mt-1">First-hour steps and a ready complaint for 1930.</span>
-            </button>
-            <button onclick="navigateTo('quiz')" class="text-left p-3 rounded-xl bg-surface-container-lowest border border-surface-container shadow-sm hover:shadow transition-all">
-              <span class="flex items-center gap-1.5 text-xs font-bold text-primary"><span class="material-symbols-outlined text-[18px]">quiz</span>Spot the scam</span>
-              <span class="block text-[11px] text-on-surface-variant mt-1">Practise on real-style messages in 2 minutes.</span>
-            </button>
-          </div>
-
-          <!-- Social Proof Metrics Strip -->
-          <div class="grid grid-cols-3 gap-4 bg-surface-container-low rounded-xl p-4 shadow-sm border border-surface-container">
-            <div class="flex flex-col">
-              <span class="font-headline text-2xl font-bold text-on-surface tracking-tight">14,820+</span>
-              <span class="text-xs text-on-surface-variant">Scams Flagged</span>
-            </div>
-            <div class="flex flex-col">
-              <span class="font-headline text-2xl font-bold text-tertiary tracking-tight">₹4.2 Cr</span>
-              <span class="text-xs text-on-surface-variant">Losses Prevented</span>
-            </div>
-            <div class="flex flex-col">
-              <span class="font-headline text-2xl font-bold text-primary tracking-tight">&lt; 0.4s</span>
-              <span class="text-xs text-on-surface-variant">Detection Time</span>
-            </div>
-          </div>
+      <div class="bg-surface-container-lowest rounded-2xl shadow-md border border-surface-container overflow-hidden">
+        <div class="grid grid-cols-2 bg-surface-container-low p-1 gap-1" role="tablist">
+          <button id="tab-text" onclick="setScanMode('text')" role="tab" class="py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all">
+            <span class="material-symbols-outlined text-[18px]">chat</span>Paste text
+          </button>
+          <button id="tab-image" onclick="setScanMode('image')" role="tab" class="py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all">
+            <span class="material-symbols-outlined text-[18px]">add_photo_alternate</span>Upload screenshot
+          </button>
         </div>
 
-        <!-- Right: Neural Risk Radar Simulation Card (Stitch Telemetry) -->
-        <div class="lg:col-span-6 relative">
-          <div class="bg-surface-container-lowest rounded-xl p-6 shadow-xl border border-surface-container relative overflow-hidden">
-            <div class="flex items-center justify-between pb-3 mb-3 border-b border-surface-container-low">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-tertiary animate-pulse"></span>
-                <span class="text-sm font-bold text-on-surface">Scam Engine Telemetry</span>
+        <div class="p-5 sm:p-6">
+          <!-- Text input -->
+          <div id="scan-text-panel">
+            <textarea id="messageInput" maxlength="2500" rows="7" oninput="updateCharCount()" placeholder="Paste the message here, e.g. &quot;Your bank account will be blocked today. Update KYC at ...&quot;" class="w-full p-4 rounded-xl bg-surface-container-low border border-outline-variant/40 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-sm text-on-surface leading-relaxed resize-y"></textarea>
+            <div class="flex items-center justify-between mt-2 text-xs text-on-surface-variant">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span class="font-semibold">Try an example:</span>
+                <button type="button" onclick="fillExample('kyc')" class="px-2.5 py-1 rounded-full bg-surface-container hover:bg-surface-container-high text-primary font-semibold">Bank KYC</button>
+                <button type="button" onclick="fillExample('prize')" class="px-2.5 py-1 rounded-full bg-surface-container hover:bg-surface-container-high text-primary font-semibold">Prize</button>
+                <button type="button" onclick="fillExample('arrest')" class="px-2.5 py-1 rounded-full bg-surface-container hover:bg-surface-container-high text-primary font-semibold">Fake police</button>
+                <button type="button" onclick="fillExample('tamil')" class="px-2.5 py-1 rounded-full bg-surface-container hover:bg-surface-container-high text-primary font-semibold">தமிழ்</button>
+                <button type="button" onclick="fillExample('safe')" class="px-2.5 py-1 rounded-full bg-surface-container hover:bg-surface-container-high text-primary font-semibold">Normal message</button>
               </div>
-              <span class="px-2.5 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed text-xs font-bold">Active Defense</span>
+              <span id="charCount" class="font-code shrink-0 ml-2">0 / 2,500</span>
             </div>
-
-            <!-- SVG Neural Threat Radar -->
-            <div class="relative w-full h-48 flex items-center justify-center bg-surface-container-low rounded-lg p-4 mb-4">
-              <svg class="w-full h-full text-primary" fill="none" viewBox="0 0 400 180" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="200" cy="90" r="70" stroke="currentColor" stroke-dasharray="3 3" stroke-opacity="0.15" stroke-width="1.5"></circle>
-                <circle cx="200" cy="90" r="45" stroke="currentColor" stroke-opacity="0.2" stroke-width="1.5"></circle>
-                <circle cx="200" cy="90" r="20" stroke="currentColor" stroke-opacity="0.25" stroke-width="1.5"></circle>
-                <line stroke="currentColor" stroke-opacity="0.15" stroke-width="1" x1="120" x2="280" y1="90" y2="90"></line>
-                <line stroke="currentColor" stroke-opacity="0.15" stroke-width="1" x1="200" x2="200" y1="20" y2="160"></line>
-                <polygon class="fill-primary/10 stroke-primary" points="200,35 245,75 220,135 160,125 155,65" stroke-width="2"></polygon>
-                <circle class="fill-error animate-ping" cx="200" cy="35" r="4"></circle>
-                <circle class="fill-error" cx="200" cy="35" r="3"></circle>
-                <text class="text-[10px] fill-error font-bold" x="210" y="38">Fake KYC APK (98%)</text>
-                <circle class="fill-secondary" cx="245" cy="75" r="3"></circle>
-                <text class="text-[10px] fill-on-surface-variant font-semibold" x="252" y="78">Urgency Vector</text>
-                <circle class="fill-tertiary" cx="220" cy="135" r="3"></circle>
-                <text class="text-[10px] fill-on-surface-variant font-semibold" x="225" y="145">Bank Impersonation</text>
-                <circle class="fill-primary" cx="160" cy="125" r="3"></circle>
-                <text class="text-[10px] fill-on-surface-variant font-semibold" x="85" y="132">UPI Handler Trap</text>
-              </svg>
-            </div>
-
-            <!-- Micro Threat Feed -->
-            <div class="space-y-2">
-              <div class="p-2.5 rounded-lg bg-surface-container flex items-center justify-between text-on-surface text-xs">
-                <div class="flex items-center gap-2 min-w-0">
-                  <span class="material-symbols-outlined text-error text-[18px]">gpp_bad</span>
-                  <span class="truncate">"Your electricity will be disconnected tonight at 9:30 PM..."</span>
-                </div>
-                <span class="bg-error-container text-on-error-container px-2 py-0.5 rounded font-bold shrink-0">Score 96</span>
-              </div>
-              <div class="p-2.5 rounded-lg bg-surface-container flex items-center justify-between text-on-surface text-xs">
-                <div class="flex items-center gap-2 min-w-0">
-                  <span class="material-symbols-outlined text-error text-[18px]">phonelink_erase</span>
-                  <span class="truncate">"Dear Customer, update your YONO SBI KYC via link sbi-secure.apk..."</span>
-                </div>
-                <span class="bg-error-container text-on-error-container px-2 py-0.5 rounded font-bold shrink-0">Score 99</span>
-              </div>
-            </div>
-
           </div>
-        </div>
 
-      </div>
-
-      <!-- Quick Interactive Demo Tryouts Section -->
-      <div class="w-full bg-surface-container-lowest rounded-xl shadow-md border border-surface-container p-6 mb-10">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div>
-            <h2 class="font-headline text-lg font-bold text-on-surface flex items-center gap-2">
-              <span class="material-symbols-outlined text-primary text-[22px]">bolt</span>
-              <span>Try Real-World Scam Detection Scenarios</span>
-            </h2>
-            <p class="text-xs text-on-surface-variant">Click any scenario below to instantly inspect how ScamShield AI deconstructs the fraud pattern:</p>
-          </div>
-          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-container rounded-full text-on-surface-variant self-start sm:self-auto">
-            5 Pre-built Judge Demos
-          </span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          <!-- Demo 1: Fake Bank KYC -->
-          <button onclick="runPrebuiltDemo(1)" class="text-left p-3.5 rounded-xl bg-surface-container-low hover:bg-surface-container transition-all border border-outline-variant/30 flex flex-col justify-between group">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold text-error bg-error-container px-2 py-0.5 rounded">High/Critical Risk</span>
-              <span class="text-xs text-on-surface-variant font-medium">Fake KYC / Bank</span>
+          <!-- Screenshot input -->
+          <div id="scan-image-panel" class="hidden">
+            <input type="file" id="screenshotFileInput" accept="image/png, image/jpeg, image/jpg, image/webp" class="hidden" onchange="handleFileSelect(event)"/>
+            <div id="dropzone" onclick="document.getElementById('screenshotFileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" class="cursor-pointer rounded-xl border-2 border-dashed border-outline-variant bg-surface-container-low hover:border-primary/50 transition-all p-8 flex flex-col items-center text-center">
+              <span class="material-symbols-outlined text-[40px] text-primary">cloud_upload</span>
+              <p class="font-bold text-on-surface mt-2">Drop a screenshot here or tap to choose</p>
+              <p class="text-xs text-on-surface-variant mt-1">PNG, JPG or WEBP, up to 10 MB. English and Tamil text are read automatically.</p>
             </div>
-            <p class="text-xs text-on-surface font-medium leading-snug mb-2 line-clamp-2">"URGENT! Your bank account will be blocked today. Send ₹2,000 to complete KYC immediately."</p>
-            <span class="text-xs text-primary font-bold inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">Run Demo &rarr;</span>
-          </button>
-
-          <!-- Demo 2: Lottery Prize Scam -->
-          <button onclick="runPrebuiltDemo(2)" class="text-left p-3.5 rounded-xl bg-surface-container-low hover:bg-surface-container transition-all border border-outline-variant/30 flex flex-col justify-between group">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold text-error bg-error-container px-2 py-0.5 rounded">Critical Risk</span>
-              <span class="text-xs text-on-surface-variant font-medium">Lottery / Prize</span>
-            </div>
-            <p class="text-xs text-on-surface font-medium leading-snug mb-2 line-clamp-2">"Congratulations! You have won ₹5,00,000. Pay ₹2,000 processing fee to claim your prize."</p>
-            <span class="text-xs text-primary font-bold inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">Run Demo &rarr;</span>
-          </button>
-
-          <!-- Demo 3: Investment Scam -->
-          <button onclick="runPrebuiltDemo(3)" class="text-left p-3.5 rounded-xl bg-surface-container-low hover:bg-surface-container transition-all border border-outline-variant/30 flex flex-col justify-between group">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">High Risk</span>
-              <span class="text-xs text-on-surface-variant font-medium">Investment Fraud</span>
-            </div>
-            <p class="text-xs text-on-surface font-medium leading-snug mb-2 line-clamp-2">"Guaranteed 30% profit every week. Invest ₹10,000 now."</p>
-            <span class="text-xs text-primary font-bold inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">Run Demo &rarr;</span>
-          </button>
-
-          <!-- Demo 4: Safe Conversation -->
-          <button onclick="runPrebuiltDemo(4)" class="text-left p-3.5 rounded-xl bg-surface-container-low hover:bg-surface-container transition-all border border-outline-variant/30 flex flex-col justify-between group">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold text-tertiary bg-emerald-100 px-2 py-0.5 rounded">Low / Safe</span>
-              <span class="text-xs text-on-surface-variant font-medium">Safe Message</span>
-            </div>
-            <p class="text-xs text-on-surface font-medium leading-snug mb-2 line-clamp-2">"Your friend sent the meeting notes. See you tomorrow."</p>
-            <span class="text-xs text-primary font-bold inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">Run Demo &rarr;</span>
-          </button>
-
-          <!-- Demo 5: Tamil Fake KYC -->
-          <button onclick="runPrebuiltDemo(5)" class="text-left p-3.5 rounded-xl bg-surface-container-low hover:bg-surface-container transition-all border border-outline-variant/30 flex flex-col justify-between group md:col-span-2 lg:col-span-2">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-bold text-error bg-error-container px-2 py-0.5 rounded">தமிழ் / Tamil Demo</span>
-              <span class="text-xs text-on-surface-variant font-medium">Fake KYC Bank Block</span>
-            </div>
-            <p class="text-xs text-on-surface font-medium leading-snug mb-2">"உங்கள் வங்கி கணக்கு இன்று முடக்கப்படும். KYC update செய்ய உடனே ₹2000 அனுப்பவும்."</p>
-            <span class="text-xs text-primary font-bold inline-flex items-center gap-1 group-hover:translate-x-1 transition-transform">Run Tamil Analysis &rarr;</span>
-          </button>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- ----------------------------------------------------------------------- -->
-    <!-- SCREEN 2: Analyze Message (Stitch Design)                              -->
-    <!-- ----------------------------------------------------------------------- -->
-    <section id="view-analyze" class="hidden fade-in max-w-7xl mx-auto px-4 sm:px-8 py-8 w-full">
-      
-      <!-- Breadcrumb and Model Chip -->
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <nav class="flex items-center gap-2 text-xs text-on-surface-variant">
-          <button onclick="navigateTo('home')" class="hover:text-primary transition-colors flex items-center gap-1">
-            <span class="material-symbols-outlined text-[16px]">home</span>
-            <span>Home</span>
-          </button>
-          <span class="text-outline-variant">/</span>
-          <span class="text-on-surface font-bold">Analyze Message</span>
-        </nav>
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-high text-xs font-semibold">
-          <span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
-          <span class="text-on-surface">FinShield-v4.2 Multilingual</span>
-          <span class="text-outline-variant">•</span>
-          <span class="text-tertiary font-bold">Latency ~0.3s</span>
-        </div>
-      </div>
-
-      <!-- Heading -->
-      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
-        <div class="max-w-2xl">
-          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container text-primary text-xs font-bold mb-1">
-            <span class="material-symbols-outlined text-[15px] material-symbols-fill">security</span>
-            <span>Intelligent Fraud Diagnostic Hub</span>
-          </div>
-          <h1 id="analyze-heading" class="font-display text-3xl sm:text-4xl font-extrabold text-on-surface tracking-tight">
-            Analyze a suspicious message
-          </h1>
-          <p id="analyze-subheading" class="text-sm text-on-surface-variant mt-1">
-            Paste the message you received and our AI will look for financial scam patterns, coercive urgency, and unauthorized payment paths in seconds.
-          </p>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <button onclick="navigateTo('upload')" class="px-4 py-2 rounded-xl bg-surface-container-low hover:bg-surface-container flex items-center gap-2 text-xs font-semibold transition-all border border-surface-container shadow-sm">
-            <span class="material-symbols-outlined text-primary text-[18px]">add_a_photo</span>
-            <span>Have a screenshot instead?</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Main Input Card (Stitch Component) -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <div class="lg:col-span-8 flex flex-col gap-4">
-          <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-surface-container">
-            
-            <!-- Language Pills Selection -->
-            <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-4 border-b border-surface-container-low">
-              <label class="text-xs font-bold text-on-surface-variant uppercase tracking-wider flex items-center gap-1.5" for="messageInput">
-                <span>Message Contents</span>
-                <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-              </label>
-
-              <div class="flex items-center gap-2">
-                <span class="text-xs text-on-surface-variant hidden sm:inline">Language:</span>
-                <div class="inline-flex p-0.5 rounded-full bg-surface-container-low text-xs" id="lang-selector-pills">
-                  <button type="button" onclick="setInputLanguage('auto')" id="pill-lang-auto" class="px-3 py-1 rounded-full font-bold bg-surface-container-lowest text-on-surface shadow-sm transition-all">Auto</button>
-                  <button type="button" onclick="setInputLanguage('en')" id="pill-lang-en" class="px-3 py-1 rounded-full font-semibold text-on-surface-variant hover:text-on-surface transition-all">English</button>
-                  <button type="button" onclick="setInputLanguage('ta')" id="pill-lang-ta" class="px-3 py-1 rounded-full font-semibold text-on-surface-variant hover:text-on-surface transition-all">தமிழ் (Tamil)</button>
-                </div>
+            <div id="file-preview-card" class="hidden flex items-center gap-4 p-3 rounded-xl bg-surface-container-low border border-outline-variant/40">
+              <img id="preview-image" alt="Selected screenshot" class="w-20 h-20 object-cover rounded-lg border border-outline-variant/40 bg-surface-container"/>
+              <div class="min-w-0 flex-1">
+                <div id="preview-filename" class="text-sm font-bold text-on-surface truncate">screenshot.png</div>
+                <div id="preview-filesize" class="text-xs text-on-surface-variant">240 KB</div>
               </div>
-            </div>
-
-            <!-- Text Area -->
-            <div class="relative rounded-xl bg-surface-container-low p-3 focus-within:bg-surface-container-lowest focus-within:ring-2 focus-within:ring-primary/20 transition-all border border-outline-variant/30">
-              <textarea id="messageInput" maxlength="2500" rows="8" placeholder="Paste SMS, WhatsApp, email, or social media conversation message here..." class="w-full bg-transparent resize-none border-0 outline-none text-on-surface text-sm leading-relaxed placeholder:text-on-surface-variant/60" oninput="updateCharCount()"></textarea>
-              <div class="flex items-center justify-between pt-2 px-1 text-xs text-on-surface-variant border-t border-surface-container-high/30 mt-2">
-                <div class="flex items-center gap-1.5 text-tertiary font-medium">
-                  <span class="material-symbols-outlined text-[15px]">lock</span>
-                  <span>Real-time PII sanitization active</span>
-                </div>
-                <span id="charCount" class="font-code text-xs">0 / 2,500</span>
-              </div>
-            </div>
-
-            <!-- Pre-fill Demo Dropdown Pill -->
-            <div class="flex flex-wrap items-center justify-between gap-3 mt-4">
-              <div class="flex items-center gap-2">
-                <button type="button" onclick="fillQuickScamDemo('kyc')" class="px-3 py-1 rounded-full bg-surface-container text-primary hover:bg-surface-container-high text-xs font-semibold transition-all">
-                  + Fill Bank KYC Scam
-                </button>
-                <button type="button" onclick="fillQuickScamDemo('lottery')" class="px-3 py-1 rounded-full bg-surface-container text-primary hover:bg-surface-container-high text-xs font-semibold transition-all">
-                  + Fill Lottery Scam
-                </button>
-                <button type="button" onclick="fillQuickScamDemo('tamil')" class="px-3 py-1 rounded-full bg-surface-container text-primary hover:bg-surface-container-high text-xs font-semibold transition-all">
-                  + Fill தமிழ் Scam
-                </button>
-              </div>
-              <button type="button" onclick="clearMessageInput()" class="text-xs text-on-surface-variant hover:text-error transition-colors font-semibold flex items-center gap-1">
-                <span class="material-symbols-outlined text-[16px]">clear_all</span>
-                <span>Clear</span>
+              <button type="button" onclick="clearSelectedFile(event)" class="p-2 rounded-full text-on-surface-variant hover:text-error hover:bg-surface-container" title="Remove">
+                <span class="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
-
-            <!-- Submit Action -->
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-surface-container-low">
-              <button id="btn-submit-analyze" onclick="handleAnalyzeMessageSubmit()" type="button" class="w-full sm:w-auto px-8 py-3.5 rounded-full bg-primary text-on-primary hover:bg-primary-container font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95">
-                <span class="material-symbols-outlined text-[20px]">search_check</span>
-                <span id="btn-submit-analyze-text">Analyze Message</span>
-              </button>
-              <div class="flex items-center gap-2 text-on-surface-variant text-xs">
-                <span class="material-symbols-outlined text-[18px] text-tertiary">bolt</span>
-                <span>Evaluation time: <strong>&lt; 0.3s</strong></span>
-              </div>
-            </div>
-
           </div>
-        </div>
 
-        <!-- Right Side: Educational Checklist -->
-        <div class="lg:col-span-4 flex flex-col gap-4">
-          <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-surface-container">
-            <h3 class="text-sm font-bold text-on-surface flex items-center gap-2 mb-3">
-              <span class="material-symbols-outlined text-primary text-[20px]">checklist</span>
-              <span>ScamShield AI Red Flags Checked</span>
-            </h3>
-            <ul class="space-y-3 text-xs text-on-surface-variant">
-              <li class="flex items-start gap-2">
-                <span class="material-symbols-outlined text-primary text-[16px] shrink-0 mt-0.5">check_circle</span>
-                <span><strong>Artificial 24h Deadlines:</strong> Threats to block bank accounts or disconnect utilities.</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="material-symbols-outlined text-primary text-[16px] shrink-0 mt-0.5">check_circle</span>
-                <span><strong>Reverse UPI QR Traps:</strong> Claims that you must scan a QR code or enter PIN to "receive" funds.</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="material-symbols-outlined text-primary text-[16px] shrink-0 mt-0.5">check_circle</span>
-                <span><strong>Credential Solicitation:</strong> Requests for OTPs, Netbanking passwords, or CVVs.</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="material-symbols-outlined text-primary text-[16px] shrink-0 mt-0.5">check_circle</span>
-                <span><strong>Remote App Requests:</strong> Instructions to install AnyDesk, TeamViewer, or RustDesk.</span>
-              </li>
-            </ul>
-          </div>
+          <button id="btn-scan" onclick="startScan()" type="button" class="mt-5 w-full py-3.5 rounded-full bg-primary text-on-primary hover:bg-primary-container font-bold text-base flex items-center justify-center gap-2 shadow-md transition-all">
+            <span class="material-symbols-outlined text-[22px]">document_scanner</span>Scan now
+          </button>
+          <p class="text-[11px] text-on-surface-variant text-center mt-2 flex items-center justify-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">lock</span>Links in the message are never opened. Nothing is sent to the sender.
+          </p>
         </div>
       </div>
 
-    </section>
-
-    <!-- ----------------------------------------------------------------------- -->
-    <!-- SCREEN 3: Upload Screenshot (Stitch Design)                            -->
-    <!-- ----------------------------------------------------------------------- -->
-    <section id="view-upload" class="hidden fade-in max-w-7xl mx-auto px-4 sm:px-8 py-8 w-full">
-      
-      <!-- Breadcrumbs -->
-      <div class="flex items-center gap-2 text-xs text-on-surface-variant mb-4">
-        <button onclick="navigateTo('home')" class="hover:text-primary transition-colors flex items-center gap-1">
-          <span class="material-symbols-outlined text-[16px]">home</span>
-          <span>Home</span>
+      <!-- Other ways ScamShield helps -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
+        <button onclick="navigateTo('community')" class="text-left p-4 rounded-xl bg-surface-container-lowest border border-surface-container shadow-sm hover:shadow transition-all">
+          <span class="flex items-center gap-1.5 text-sm font-bold text-primary"><span class="material-symbols-outlined text-[20px]">person_search</span>Check before you pay</span>
+          <span class="block text-xs text-on-surface-variant mt-1">Has this phone number, UPI ID or website been reported?</span>
         </button>
-        <span class="text-outline-variant">/</span>
-        <span class="text-on-surface font-bold">Upload Screenshot</span>
-      </div>
-
-      <div class="max-w-2xl mb-6">
-        <h1 class="font-display text-3xl font-extrabold text-on-surface tracking-tight">
-          Scan screenshot with OCR
-        </h1>
-        <p class="text-sm text-on-surface-variant mt-1">
-          Upload a screenshot of any SMS, WhatsApp chat, or payment request. Optical Character Recognition (OCR) extracts and analyzes all conversations.
-        </p>
-      </div>
-
-      <!-- Upload Container -->
-      <div class="max-w-3xl mx-auto bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-surface-container">
-        
-        <!-- Dropzone -->
-        <div id="dropzone" onclick="document.getElementById('screenshotFileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" class="rounded-xl p-10 flex flex-col items-center justify-center text-center bg-surface-container-low hover:bg-surface-container transition-all cursor-pointer border-2 border-dashed border-outline-variant/60 group">
-          <input type="file" id="screenshotFileInput" accept="image/png, image/jpeg, image/jpg, image/webp" class="hidden" onchange="handleFileSelect(event)"/>
-          
-          <div class="w-16 h-16 rounded-full bg-surface-container-lowest flex items-center justify-center text-primary group-hover:scale-105 transition-transform shadow-sm mb-3">
-            <span class="material-symbols-outlined text-[32px]">cloud_upload</span>
-          </div>
-          <p id="dropzone-label" class="font-headline text-base font-bold text-on-surface mb-1">
-            Drag and drop chat screenshot here, or click to browse
-          </p>
-          <p class="text-xs text-on-surface-variant max-w-sm mb-4">
-            Supports PNG, JPG, JPEG, and WEBP up to 10MB. Regional scripts and Tamil text automatically extracted.
-          </p>
-          <button type="button" class="px-5 py-2.5 rounded-full bg-primary text-on-primary text-xs font-bold shadow-sm hover:bg-primary-container transition-all">
-            Browse Device Files
-          </button>
-        </div>
-
-        <!-- Selected File Preview Card -->
-        <div id="file-preview-card" class="hidden mt-4 p-4 rounded-xl bg-surface-container-low flex items-center justify-between gap-3 border border-outline-variant/30">
-          <div class="flex items-center gap-3 min-w-0">
-            <span class="material-symbols-outlined text-primary text-[28px]">image</span>
-            <div class="flex flex-col min-w-0">
-              <span id="preview-filename" class="text-sm font-bold text-on-surface truncate">screenshot.png</span>
-              <span id="preview-filesize" class="text-xs text-on-surface-variant">240 KB</span>
-            </div>
-          </div>
-          <button type="button" onclick="clearSelectedFile(event)" class="text-on-surface-variant hover:text-error p-1.5 rounded-full hover:bg-surface-container transition-colors">
-            <span class="material-symbols-outlined text-[20px]">delete</span>
-          </button>
-        </div>
-
-        <!-- Submit Screenshot Analysis -->
-        <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-surface-container-low">
-          <button id="btn-submit-screenshot" onclick="handleAnalyzeScreenshotSubmit()" type="button" class="px-8 py-3.5 rounded-full bg-primary text-on-primary hover:bg-primary-container font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined text-[20px]">document_scanner</span>
-            <span>Extract & Analyze Screenshot</span>
-          </button>
-        </div>
-
-      </div>
-
-    </section>
-
-    <!-- ----------------------------------------------------------------------- -->
-    <!-- SCREEN 4: Processing State (Stitch Design)                             -->
-    <!-- ----------------------------------------------------------------------- -->
-    <section id="view-processing" class="hidden fade-in max-w-7xl mx-auto px-4 sm:px-8 py-12 w-full">
-      <div class="relative w-full max-w-2xl mx-auto bg-surface-container-lowest rounded-xl shadow-xl overflow-hidden p-6 sm:p-10 border border-surface-container">
-        
-        <!-- Animated Top Progress Bar -->
-        <div class="absolute top-0 left-0 right-0 h-1.5 bg-surface-container">
-          <div id="processing-bar-fill" class="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-300 ease-out w-[15%] rounded-full shadow-[0_0_12px_rgba(29,78,216,0.45)]"></div>
-        </div>
-
-        <div class="flex flex-col items-center text-center mt-2">
-          <!-- Animated Spinner Dial -->
-          <div class="relative flex items-center justify-center w-28 h-28 mb-4">
-            <svg class="w-full h-full transform -rotate-90 pointer-events-none" viewBox="0 0 120 120">
-              <circle class="text-surface-container-high" cx="60" cy="60" fill="none" r="50" stroke="currentColor" stroke-width="6"></circle>
-              <circle id="processing-circle-stroke" class="text-primary transition-all duration-300" cx="60" cy="60" fill="none" r="50" stroke="currentColor" stroke-dasharray="314.159" stroke-dashoffset="260" stroke-linecap="round" stroke-width="6"></circle>
-            </svg>
-            <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span class="material-symbols-outlined text-[32px] text-primary material-symbols-fill animate-pulse">security</span>
-            </div>
-            <div class="absolute bottom-0 right-0 bg-surface-container-lowest shadow-md rounded-full px-2 py-0.5 font-code text-xs text-primary font-bold">
-              <span id="processing-percent-text">15%</span>
-            </div>
-          </div>
-
-          <h2 class="font-headline text-xl font-bold text-on-surface">Analyzing Conversation with ScamShield AI...</h2>
-          <p class="text-xs text-on-surface-variant mt-1 max-w-md">Deconstructing linguistic markers, artificial urgency, and financial impersonation signatures.</p>
-        </div>
-
-        <!-- Sequential Pipeline Steps (Live Animated) -->
-        <div class="mt-6 bg-surface-container-low rounded-xl p-4 space-y-2.5 text-xs">
-          <div id="step-1" class="flex items-center gap-3 p-2 rounded-lg bg-surface-container-lowest shadow-sm transition-all">
-            <span class="material-symbols-outlined text-[18px] text-tertiary font-bold">check_circle</span>
-            <span class="font-semibold text-on-surface">1. Extracting text & sanitizing PII</span>
-          </div>
-          <div id="step-2" class="flex items-center gap-3 p-2 rounded-lg bg-surface-container-lowest shadow-sm transition-all">
-            <span id="step-2-icon" class="material-symbols-outlined text-[18px] text-primary animate-spin">progress_activity</span>
-            <span class="font-semibold text-on-surface">2. Detecting language & regional scripts (English/Tamil)</span>
-          </div>
-          <div id="step-3" class="flex items-center gap-3 p-2 rounded-lg opacity-60 transition-all">
-            <span id="step-3-icon" class="material-symbols-outlined text-[18px] text-outline-variant">radio_button_unchecked</span>
-            <span class="font-semibold text-on-surface-variant">3. Checking heuristic rule patterns & known fraud vectors</span>
-          </div>
-          <div id="step-4" class="flex items-center gap-3 p-2 rounded-lg opacity-60 transition-all">
-            <span id="step-4-icon" class="material-symbols-outlined text-[18px] text-outline-variant">radio_button_unchecked</span>
-            <span class="font-semibold text-on-surface-variant">4. AI cognitive deep evaluation & intent analysis</span>
-          </div>
-          <div id="step-5" class="flex items-center gap-3 p-2 rounded-lg opacity-60 transition-all">
-            <span id="step-5-icon" class="material-symbols-outlined text-[18px] text-outline-variant">radio_button_unchecked</span>
-            <span class="font-semibold text-on-surface-variant">5. Calculating multi-factor risk score & safety steps</span>
-          </div>
-        </div>
-
+        <button onclick="navigateTo('emergency')" class="text-left p-4 rounded-xl bg-error-container/60 border border-error/20 shadow-sm hover:shadow transition-all">
+          <span class="flex items-center gap-1.5 text-sm font-bold text-error"><span class="material-symbols-outlined text-[20px]">emergency</span>Already scammed?</span>
+          <span class="block text-xs text-on-error-container mt-1">First-hour steps and a ready complaint for 1930.</span>
+        </button>
+        <button onclick="navigateTo('quiz')" class="text-left p-4 rounded-xl bg-surface-container-lowest border border-surface-container shadow-sm hover:shadow transition-all">
+          <span class="flex items-center gap-1.5 text-sm font-bold text-primary"><span class="material-symbols-outlined text-[20px]">quiz</span>Spot the scam</span>
+          <span class="block text-xs text-on-surface-variant mt-1">Practise on real-style messages in 2 minutes.</span>
+        </button>
       </div>
     </section>
 
     <!-- ----------------------------------------------------------------------- -->
-    <!-- SCREEN 5: Dynamic Detection Result (High / Medium / Low Risk)          -->
+    <!-- Scanner: the message / screenshot under a moving scan beam               -->
     <!-- ----------------------------------------------------------------------- -->
-    <section id="view-result" class="hidden fade-in max-w-7xl mx-auto px-4 sm:px-8 py-8 w-full">
-      
-      <!-- Top Dynamic Alert Banner -->
-      <div id="result-banner" class="relative overflow-hidden rounded-xl shadow-xl p-6 mb-6 text-on-error bg-error transition-all">
-        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div class="flex items-start sm:items-center gap-4">
-            <div id="result-banner-icon-box" class="w-12 h-12 rounded-xl bg-on-error/20 flex items-center justify-center shrink-0">
-              <span id="result-banner-icon" class="material-symbols-outlined text-[32px] text-on-error animate-pulse material-symbols-fill">warning</span>
-            </div>
-            <div>
-              <div class="flex flex-wrap items-center gap-2 mb-1">
-                <span id="result-banner-title" class="font-headline text-lg sm:text-xl uppercase tracking-wider font-extrabold text-on-error">
-                  High Risk Financial Scam Detected
-                </span>
-                <span id="result-banner-chip" class="px-2.5 py-0.5 rounded-full bg-on-error text-error text-xs uppercase font-bold tracking-wider">
-                  Immediate Action Required
-                </span>
-              </div>
-              <p id="result-banner-desc" class="text-sm text-on-error/95 max-w-3xl">
-                Do not transfer money, scan QR codes, or share personal authentication credentials with this sender.
-              </p>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2 shrink-0 self-end md:self-center">
-            <a href="tel:1930" class="px-4 py-2 rounded-full bg-surface-container-lowest text-error text-xs font-bold flex items-center gap-1.5 shadow-md hover:bg-error-container transition-all">
-              <span class="material-symbols-outlined text-[18px]">phone_in_talk</span>
-              <span>Helpline 1930</span>
-            </a>
-          </div>
+    <section id="view-processing" class="hidden fade-in max-w-2xl mx-auto px-4 sm:px-8 py-10 w-full">
+      <div class="scanner-frame rounded-2xl bg-slate-900 p-4 sm:p-6 shadow-2xl">
+        <div class="flex items-center justify-between text-[11px] font-code text-sky-300/80 mb-3">
+          <span class="flex items-center gap-1.5"><span id="scanner-dot" class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span><span id="scanner-mode">SCANNING MESSAGE</span></span>
+          <span id="scanner-percent">0%</span>
         </div>
+        <div id="scanner-window" class="scanner-window relative rounded-xl bg-white overflow-hidden min-h-[180px] max-h-[360px]">
+          <span class="scanner-corner tl"></span><span class="scanner-corner tr"></span><span class="scanner-corner bl"></span><span class="scanner-corner br"></span>
+          <div id="scanner-doc" class="relative p-6 text-sm text-slate-800 leading-loose whitespace-pre-line overflow-hidden max-h-[360px]"></div>
+          <img id="scanner-image" alt="Screenshot being scanned" class="hidden w-full max-h-[360px] object-contain bg-slate-100"/>
+          <div id="scanner-beam" class="scanner-beam"></div>
+        </div>
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs font-semibold" id="scanner-checks"></div>
       </div>
-
-      <!-- Language Switcher & Metadata -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 px-1">
-        <div class="flex items-center gap-3">
-          <span class="material-symbols-outlined text-primary text-[20px]">translate</span>
-          <div class="inline-flex p-0.5 rounded-full bg-surface-container-high text-xs">
-            <button onclick="setAppLanguage('en')" class="px-3 py-1 rounded-full font-bold bg-surface-container-lowest text-primary shadow-sm">English</button>
-            <button onclick="setAppLanguage('ta')" class="px-3 py-1 rounded-full font-semibold text-on-surface-variant hover:text-on-surface">தமிழ்</button>
-          </div>
-          <span id="result-detected-lang-pill" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-xs font-semibold">
-            <span class="w-2 h-2 rounded-full bg-secondary"></span>
-            <span id="result-lang-label">Detected: English</span>
-          </span>
-        </div>
-
-        <div class="flex items-center gap-3 text-on-surface-variant text-xs font-medium">
-          <span id="result-scan-id-label" class="flex items-center gap-1 font-code">Scan #SS-READY</span>
-          <span>•</span>
-          <span id="result-analysis-mode-label" class="text-primary font-bold">AI + Rules Mode</span>
-        </div>
-      </div>
-
-      <!-- Bento Grid: Risk Gauge & Message Quote -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-        
-        <!-- Left: Radial Risk Gauge -->
-        <div class="lg:col-span-6 bg-surface-container-lowest rounded-xl p-6 sm:p-8 shadow-md border border-surface-container flex flex-col justify-between">
-          <div class="flex items-start justify-between gap-4 mb-4">
-            <div>
-              <span class="text-xs uppercase tracking-wider text-on-surface-variant font-bold block mb-1">Overall Threat Assessment</span>
-              <h2 class="font-headline text-2xl font-bold text-on-surface">Risk Level Verdict</h2>
-            </div>
-            <span id="result-verdict-badge" class="px-3 py-1 rounded-full bg-error text-on-error text-xs font-bold tracking-wide shadow-sm flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-on-error animate-ping"></span>
-              <span id="result-verdict-text">HIGH RISK</span>
-            </span>
-          </div>
-
-          <div class="flex flex-col sm:flex-row items-center gap-6 my-4">
-            <!-- SVG Gauge -->
-            <div class="relative w-44 h-44 shrink-0 flex items-center justify-center">
-              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-                <circle class="text-surface-container" cx="60" cy="60" fill="none" r="50" stroke="currentColor" stroke-width="10"></circle>
-                <circle id="result-gauge-fill" class="text-error transition-all duration-1000 ease-out" cx="60" cy="60" fill="none" r="50" stroke="currentColor" stroke-dasharray="314.159" stroke-dashoffset="40.84" stroke-linecap="round" stroke-width="10"></circle>
-              </svg>
-              <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span id="result-score-number" class="font-display text-4xl font-extrabold text-error leading-none tracking-tight">87</span>
-                <span class="text-xs text-on-surface-variant uppercase font-bold mt-1">out of 100</span>
-              </div>
-            </div>
-
-            <!-- Details -->
-            <div class="flex flex-col gap-3 flex-1 w-full">
-              <div>
-                <span class="text-xs text-on-surface-variant font-semibold block mb-1">Scam Classification</span>
-                <div id="result-category-box" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-error-container text-on-error-container text-xs font-bold">
-                  <span class="material-symbols-outlined text-[18px]">account_balance</span>
-                  <span id="result-category-title">Fake KYC / Bank Impersonation</span>
-                </div>
-              </div>
-
-              <div class="flex items-center justify-between text-xs font-medium">
-                <span class="text-on-surface-variant">Engine Confidence:</span>
-                <span id="result-confidence-text" class="font-bold text-primary">98.4%</span>
-              </div>
-              <div class="w-full bg-surface-container-high rounded-full h-2 overflow-hidden">
-                <div id="result-confidence-bar" class="bg-primary h-full rounded-full" style="width: 98%;"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-4 rounded-xl bg-surface-container-low mt-2 border border-surface-container">
-            <p id="result-quick-summary" class="text-xs text-on-surface-variant leading-relaxed">
-              This message uses fake urgency and demands an immediate monetary fee while impersonating official banking KYC protocols.
-            </p>
-          </div>
-        </div>
-
-        <!-- Right: Original Message Quote & Trigger Highlights -->
-        <div class="lg:col-span-6 bg-surface-container-lowest rounded-xl p-6 sm:p-8 shadow-md border border-surface-container flex flex-col justify-between">
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-4">
-              <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-primary text-[22px]">quick_reference_all</span>
-                <span class="font-headline text-lg font-bold text-on-surface">Original Message Analyzed</span>
-              </div>
-              <span id="result-input-source-badge" class="px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant text-xs font-semibold">
-                Message Text
-              </span>
-            </div>
-
-            <div class="relative p-4 rounded-xl bg-surface-container-low text-on-surface mb-4 border border-surface-container">
-              <span class="material-symbols-outlined absolute top-2 right-2 text-[32px] text-outline-variant/30 select-none">format_quote</span>
-              <p id="result-raw-text-quote" class="text-sm text-on-surface leading-loose relative z-10 pr-6 whitespace-pre-line">
-                "URGENT! Your bank account will be blocked today. Send ₹2,000 to complete KYC immediately."
-              </p>
-            </div>
-            <div id="result-highlight-legend" class="hidden flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-on-surface-variant mb-4 -mt-2">
-              <span class="font-semibold">Red-flag highlighter:</span>
-              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-200 border border-red-400"></span>Danger</span>
-              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-amber-100 border border-amber-400"></span>Warning</span>
-              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-sky-100 border border-sky-300"></span>Worth checking</span>
-              <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-100 border border-emerald-400"></span>Official</span>
-              <span class="italic">Hover or tap a highlight to see why.</span>
-            </div>
-
-            <!-- Extracted Triggers / Entities -->
-            <div class="flex flex-col gap-2">
-              <span class="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Detected Red Flags</span>
-              <div id="result-indicators-chips" class="flex flex-wrap gap-2">
-                <!-- Dynamically populated chips -->
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Link X-ray: where each link really goes -->
-      <div id="result-link-xray-section" class="hidden bg-surface-container-lowest rounded-xl p-6 shadow-md border border-surface-container mb-6">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-          <h3 class="font-headline text-base font-bold text-on-surface flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary text-[22px]">travel_explore</span>
-            <span>Link X-ray</span>
-          </h3>
-          <span class="text-[11px] text-on-surface-variant">Links are inspected as text only &mdash; never opened.</span>
-        </div>
-        <div id="result-link-xray-list" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-      </div>
-
-      <!-- Why Suspicious & Actionable Recommendations (Stitch Breakdown) -->
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-        
-        <!-- Why is this suspicious? -->
-        <div class="lg:col-span-6 bg-surface-container-lowest rounded-xl p-6 shadow-md border border-surface-container">
-          <h3 class="font-headline text-base font-bold text-on-surface flex items-center gap-2 mb-4">
-            <span class="material-symbols-outlined text-error text-[22px]">psychology_alt</span>
-            <span>Why is this suspicious? (Scam Mechanics)</span>
-          </h3>
-          <div id="result-explanation-box" class="text-xs text-on-surface-variant leading-relaxed whitespace-pre-line space-y-2 bg-surface-container-low p-4 rounded-xl border border-surface-container">
-            Loading detailed explanation...
-          </div>
-        </div>
-
-        <!-- What should you do? (Recommendations) -->
-        <div class="lg:col-span-6 bg-surface-container-lowest rounded-xl p-6 shadow-md border border-surface-container">
-          <h3 class="font-headline text-base font-bold text-on-surface flex items-center gap-2 mb-4">
-            <span class="material-symbols-outlined text-tertiary text-[22px]">verified_user</span>
-            <span>Recommended Safety Actions</span>
-          </h3>
-          <div id="result-recommendations-list" class="space-y-2.5 text-xs">
-            <!-- Dynamically populated recommendations -->
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Bottom Actions Bar -->
-      <div class="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-surface-container-low border border-surface-container">
-        <div class="flex items-center gap-3">
-          <button onclick="copyAnalysisSummary()" class="px-4 py-2 rounded-full bg-surface-container-lowest hover:bg-surface-container text-xs font-bold text-on-surface flex items-center gap-1.5 shadow-sm border border-outline-variant/30 transition-all">
-            <span class="material-symbols-outlined text-[16px]">content_copy</span>
-            <span>Copy Safety Report</span>
-          </button>
-          <button onclick="navigateTo('analyze')" class="px-4 py-2 rounded-full bg-primary text-on-primary hover:bg-primary-container text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all">
-            <span class="material-symbols-outlined text-[16px]">add</span>
-            <span>Scan Another Message</span>
-          </button>
-          <button id="btn-report-community" onclick="reportFromCurrentAnalysis()" class="hidden px-4 py-2 rounded-full bg-surface-container-lowest hover:bg-surface-container text-xs font-bold text-on-surface flex items-center gap-1.5 shadow-sm border border-outline-variant/30 transition-all">
-            <span class="material-symbols-outlined text-[16px]">campaign</span>
-            <span>Report Scammer Details</span>
-          </button>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-          <button id="btn-emergency-from-result" onclick="openEmergencyFromResult()" class="hidden px-4 py-2 rounded-full bg-amber-400 text-amber-950 hover:bg-amber-500 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all">
-            <span class="material-symbols-outlined text-[16px]">emergency</span>
-            <span>Already paid or shared details?</span>
-          </button>
-          <button id="btn-warn-family" onclick="warnFamilyOnWhatsApp()" class="hidden px-4 py-2 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all">
-            <span class="material-symbols-outlined text-[16px]">family_restroom</span>
-            <span>Warn Family on WhatsApp</span>
-          </button>
-          <button onclick="reportScamOnline()" class="px-4 py-2 rounded-full bg-error text-on-error hover:bg-red-700 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all">
-            <span class="material-symbols-outlined text-[16px]">report</span>
-            <span>Report to Cyber Crime (1930)</span>
-          </button>
-        </div>
-      </div>
-
+      <p id="scanner-result-line" class="text-center text-sm font-bold text-on-surface mt-4 h-5"></p>
     </section>
 
+    <!-- ----------------------------------------------------------------------- -->
+    <!-- Result                                                                   -->
+    <!-- ----------------------------------------------------------------------- -->
+    <section id="view-result" class="hidden fade-in max-w-3xl mx-auto px-4 sm:px-8 py-8 w-full">
+      <!-- Verdict -->
+      <div id="result-banner" class="rounded-2xl p-6 shadow-lg mb-5 flex items-start gap-4">
+        <span id="result-banner-icon" class="material-symbols-outlined material-symbols-fill text-[44px] shrink-0">warning</span>
+        <div class="flex-1 min-w-0">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span id="result-verdict-text" class="font-display text-3xl font-extrabold tracking-tight">SCAM</span>
+            <span id="result-score-pill" class="px-2.5 py-0.5 rounded-full text-xs font-bold">Risk 90 / 100</span>
+          </div>
+          <p id="result-verdict-label" class="text-sm font-semibold mt-1 opacity-95"></p>
+          <p id="result-category" class="text-xs mt-2 opacity-90"></p>
+        </div>
+      </div>
+
+      <!-- The message, with red flags highlighted -->
+      <div class="bg-surface-container-lowest rounded-2xl p-5 sm:p-6 shadow-sm border border-surface-container mb-5">
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h2 class="font-headline text-base font-bold text-on-surface flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[22px]">plagiarism</span>What we found in the message</h2>
+          <span id="result-input-source-badge" class="px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-semibold">Text</span>
+        </div>
+        <p id="result-raw-text-quote" class="p-4 rounded-xl bg-surface-container-low text-sm text-on-surface leading-loose whitespace-pre-line"></p>
+        <div id="result-highlight-legend" class="hidden flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-on-surface-variant mt-3">
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-200 border border-red-400"></span>Danger</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-amber-100 border border-amber-400"></span>Warning</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-sky-100 border border-sky-300"></span>Worth checking</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-emerald-100 border border-emerald-400"></span>Official link</span>
+          <span>&middot; Tap a highlight to see why.</span>
+        </div>
+      </div>
+
+      <!-- Why -->
+      <div class="bg-surface-container-lowest rounded-2xl p-5 sm:p-6 shadow-sm border border-surface-container mb-5">
+        <h2 class="font-headline text-base font-bold text-on-surface flex items-center gap-2 mb-3"><span class="material-symbols-outlined text-error text-[22px]">flag</span><span id="result-why-title">Why</span></h2>
+        <ul id="result-red-flags" class="space-y-3"></ul>
+      </div>
+
+      <!-- Link X-ray -->
+      <div id="result-link-xray-section" class="hidden bg-surface-container-lowest rounded-2xl p-5 sm:p-6 shadow-sm border border-surface-container mb-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h2 class="font-headline text-base font-bold text-on-surface flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[22px]">travel_explore</span>Where the links really go</h2>
+          <span class="text-[11px] text-on-surface-variant">Checked as text only &mdash; never opened.</span>
+        </div>
+        <div id="result-link-xray-list" class="grid grid-cols-1 gap-3"></div>
+      </div>
+
+      <!-- What to do -->
+      <div class="bg-surface-container-lowest rounded-2xl p-5 sm:p-6 shadow-sm border border-surface-container mb-5">
+        <h2 class="font-headline text-base font-bold text-on-surface flex items-center gap-2 mb-3"><span class="material-symbols-outlined text-tertiary text-[22px]">verified_user</span>What to do now</h2>
+        <ol id="result-recommendations-list" class="space-y-2 text-sm"></ol>
+      </div>
+
+      <!-- Actions -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <button id="btn-emergency-from-result" onclick="openEmergencyFromResult()" class="hidden sm:col-span-2 px-4 py-3 rounded-full bg-error text-on-error hover:bg-red-700 text-sm font-bold flex items-center justify-center gap-2 shadow-sm">
+          <span class="material-symbols-outlined text-[18px]">emergency</span>Already paid or shared details? Get help now
+        </button>
+        <button id="btn-warn-family" onclick="warnFamilyOnWhatsApp()" class="hidden px-4 py-2.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 text-sm font-bold flex items-center justify-center gap-2 shadow-sm">
+          <span class="material-symbols-outlined text-[18px]">family_restroom</span>Warn family on WhatsApp
+        </button>
+        <button id="btn-report-community" onclick="reportFromCurrentAnalysis()" class="hidden px-4 py-2.5 rounded-full bg-surface-container-lowest hover:bg-surface-container text-sm font-bold text-on-surface flex items-center justify-center gap-2 shadow-sm border border-outline-variant/40">
+          <span class="material-symbols-outlined text-[18px]">campaign</span>Report scammer's number / UPI
+        </button>
+        <button onclick="newScan()" class="sm:col-span-2 px-4 py-2.5 rounded-full bg-primary text-on-primary hover:bg-primary-container text-sm font-bold flex items-center justify-center gap-2 shadow-sm">
+          <span class="material-symbols-outlined text-[18px]">document_scanner</span>Scan another message
+        </button>
+      </div>
+    </section>
     <!-- ----------------------------------------------------------------------- -->
     <!-- SCREEN 6: History Dashboard (Stitch Design)                            -->
     <!-- ----------------------------------------------------------------------- -->
-    <section id="view-history" class="hidden fade-in max-w-7xl mx-auto px-4 sm:px-8 py-8 w-full">
+    <section id="view-history" class="hidden fade-in max-w-4xl mx-auto px-4 sm:px-8 py-8 w-full">
       
       <!-- Top Bar -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 class="font-display text-3xl font-extrabold text-on-surface tracking-tight">Analysis History</h1>
-          <p class="text-sm text-on-surface-variant mt-1">Review previously scanned messages, risk scores, and fraud reports.</p>
+          <h1 class="font-display text-3xl font-extrabold text-on-surface tracking-tight">Your scan history</h1>
+          <p class="text-sm text-on-surface-variant mt-1">Messages and screenshots you have scanned while logged in.</p>
         </div>
         <div class="flex items-center gap-2">
           <button onclick="refreshHistory()" class="px-3.5 py-2 rounded-full bg-surface-container-low hover:bg-surface-container text-xs font-bold text-on-surface flex items-center gap-1.5 border border-surface-container shadow-sm transition-all">
@@ -894,8 +345,8 @@
         <span class="material-symbols-outlined text-[48px] text-outline-variant mb-2">history</span>
         <h3 class="font-headline text-base font-bold text-on-surface">No analysis records found</h3>
         <p class="text-xs text-on-surface-variant max-w-sm mt-1 mb-4">Start by scanning a suspicious chat or screenshot to build your personal defensive history.</p>
-        <button onclick="navigateTo('analyze')" class="px-5 py-2.5 rounded-full bg-primary text-on-primary text-xs font-bold shadow-sm">
-          Analyze Message Now
+        <button onclick="navigateTo('scan')" class="px-5 py-2.5 rounded-full bg-primary text-on-primary text-xs font-bold shadow-sm">
+          Scan a message
         </button>
       </div>
 
@@ -1031,88 +482,6 @@
       </div>
     </section>
 
-    <!-- ----------------------------------------------------------------------- -->
-    <!-- SCREEN 7: Settings & Privacy (Stitch Design)                           -->
-    <!-- ----------------------------------------------------------------------- -->
-    <section id="view-settings" class="hidden fade-in max-w-7xl mx-auto px-4 sm:px-8 py-8 w-full">
-      <div class="max-w-3xl mb-6">
-        <h1 class="font-display text-3xl font-extrabold text-on-surface tracking-tight">Settings & Privacy</h1>
-        <p class="text-sm text-on-surface-variant mt-1">Configure AI detection heuristics, OCR engine, API connectivity, and privacy controls.</p>
-      </div>
-
-      <div class="space-y-6 max-w-3xl">
-        
-        <!-- AI Model & Engine Status -->
-        <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-surface-container">
-          <h2 class="font-headline text-base font-bold text-on-surface flex items-center gap-2 mb-4">
-            <span class="material-symbols-outlined text-primary text-[20px]">smart_toy</span>
-            <span>Active AI Scam Detection Engine</span>
-          </h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div class="p-3.5 rounded-lg bg-surface-container-low border border-surface-container">
-              <span class="text-on-surface-variant block mb-1">Primary Engine</span>
-              <span class="font-bold text-on-surface text-sm">Multi-Provider LLM (Gemini / OpenAI / Fallback)</span>
-            </div>
-            <div class="p-3.5 rounded-lg bg-surface-container-low border border-surface-container">
-              <span class="text-on-surface-variant block mb-1">Heuristic Engine Status</span>
-              <span class="font-bold text-tertiary text-sm flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-tertiary"></span>
-                <span>Rule-based Heuristic V4.2 Online</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Privacy & Security Controls -->
-        <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-surface-container">
-          <h2 class="font-headline text-base font-bold text-on-surface flex items-center gap-2 mb-4">
-            <span class="material-symbols-outlined text-primary text-[20px]">security</span>
-            <span>Privacy by Design Settings</span>
-          </h2>
-          <div class="space-y-4 text-xs">
-            <label class="flex items-center justify-between p-3 rounded-lg bg-surface-container-low cursor-pointer">
-              <div>
-                <span class="font-bold text-on-surface block">Automatic PII & Phone Number Masking</span>
-                <span class="text-on-surface-variant">Sanitizes names, OTPs, and credit card numbers from application logs.</span>
-              </div>
-              <input type="checkbox" checked class="w-4 h-4 accent-primary" disabled/>
-            </label>
-            <label class="flex items-center justify-between p-3 rounded-lg bg-surface-container-low cursor-pointer">
-              <div>
-                <span class="font-bold text-on-surface block">Auto-Delete Temporary Screenshot Uploads</span>
-                <span class="text-on-surface-variant">Image files are purged immediately from memory after OCR completion.</span>
-              </div>
-              <input type="checkbox" checked class="w-4 h-4 accent-primary" disabled/>
-            </label>
-          </div>
-        </div>
-
-        <!-- API Configuration -->
-        <div class="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-surface-container">
-          <h2 class="font-headline text-base font-bold text-on-surface flex items-center gap-2 mb-4">
-            <span class="material-symbols-outlined text-primary text-[20px]">api</span>
-            <span>API Server Configuration</span>
-          </h2>
-          <div class="space-y-3 text-xs">
-            <div>
-              <label class="font-bold text-on-surface block mb-1" for="apiBaseUrlInput">Backend API URL</label>
-              <input type="text" id="apiBaseUrlInput" class="w-full p-2.5 rounded-lg bg-surface-container-low border border-outline-variant/30 text-on-surface font-code outline-none focus:ring-2 focus:ring-primary/20" value="/api/v1"/>
-            </div>
-            <div class="flex justify-end gap-2 pt-2">
-              <a href="/docs" target="_blank" class="px-4 py-2 rounded-full bg-surface-container text-primary font-bold hover:bg-surface-container-high transition-all flex items-center gap-1">
-                <span class="material-symbols-outlined text-[16px]">menu_book</span>
-                <span>FastAPI Swagger Docs</span>
-              </a>
-              <button onclick="saveApiSettings()" class="px-5 py-2 rounded-full bg-primary text-on-primary font-bold shadow-sm hover:bg-primary-container transition-all">
-                Save Configuration
-              </button>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
   </main>
 
   <!-- ========================================================================= -->
@@ -1173,3 +542,4 @@
   <script src="/static/app.js"></script>
 </body>
 </html>
+

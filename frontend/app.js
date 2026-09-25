@@ -1,15 +1,14 @@
 /**
- * ScamShield AI - Frontend Application Controller & API Integration Layer
- * Integrates Stitch UI components with FastAPI Backend Endpoints.
+ * ScamShield - frontend controller.
+ * Scan a message or screenshot, show the verdict, and the helper tools
+ * (check before you pay, emergency help, quiz, history).
  */
 
-// Global State
 const state = {
-  apiBaseUrl: localStorage.getItem("scamshield_api_url") || "/api/v1",
+  apiBaseUrl: "/api/v1",
   token: localStorage.getItem("scamshield_token") || null,
   user: null,
-  currentLanguage: localStorage.getItem("scamshield_lang") || "en",
-  selectedInputLanguage: "auto",
+  scanMode: "text", // 'text' | 'image'
   selectedFile: null,
   currentAnalysis: null,
   historyFilter: "all",
@@ -19,207 +18,60 @@ const state = {
   authMode: "login", // 'login' | 'register'
 };
 
-// ---------------------------------------------------------------------------
-// Pre-built Demo Messages (Hackathon Requirement Section 20)
-// ---------------------------------------------------------------------------
-const DEMO_CASES = {
-  1: {
-    title: "Urgent Bank KYC Expiry Scam",
-    category: "fake_kyc",
-    text: "URGENT! Your bank account will be blocked today. Send ₹2,000 to complete KYC immediately.",
-    language: "auto",
-  },
-  2: {
-    title: "Lottery / Prize Fee Scam",
-    category: "lottery_prize_scam",
-    text: "Congratulations! You have won ₹5,00,000. Pay ₹2,000 processing fee to claim your prize.",
-    language: "auto",
-  },
-  3: {
-    title: "Guaranteed Return Investment Scam",
-    category: "investment_scam",
-    text: "Guaranteed 30% profit every week. Invest ₹10,000 now.",
-    language: "auto",
-  },
-  4: {
-    title: "Safe Normal Message",
-    category: "safe_conversation",
-    text: "Your friend sent the meeting notes. See you tomorrow.",
-    language: "auto",
-  },
-  5: {
-    title: "Tamil Fake KYC Bank Block",
-    category: "fake_kyc",
-    text: "உங்கள் வங்கி கணக்கு இன்று முடக்கப்படும். KYC update செய்ய உடனே ₹2000 அனுப்பவும்.",
-    language: "ta",
-  },
-};
-
-// ---------------------------------------------------------------------------
-// Translations Dictionary (EN / தமிழ்)
-// ---------------------------------------------------------------------------
-const TRANSLATIONS = {
-  en: {
-    alertText: "Surge in fake electricity bill & bank KYC SMS APK scams reported this week. Stay alert.",
-    heroHeading: 'Stay one step ahead of <span class="text-primary underline decoration-primary-fixed-dim decoration-4 underline-offset-4">financial scams</span>.',
-    heroSubheading: "Analyze suspicious messages before you send money or share sensitive information. Instant AI analysis for SMS, WhatsApp, and chat screenshots with English and Tamil support.",
-    heroBtnAnalyze: "Analyze a Message",
-    heroBtnUpload: "Upload Screenshot",
-    analyzeHeading: "Analyze a suspicious message",
-    analyzeSubheading: "Paste the message you received and our AI will look for financial scam patterns, coercive urgency, and unauthorized payment paths in seconds.",
-    btnAnalyze: "Analyze Message",
-    highRiskTitle: "High Risk Financial Scam Detected",
-    highRiskChip: "Immediate Action Required",
-    highRiskDesc: "Do not transfer money, scan QR codes, or share personal authentication credentials with this sender.",
-    lowRiskTitle: "Safe / Low Risk Interaction",
-    lowRiskChip: "No Major Scam Detected",
-    lowRiskDesc: "No major financial scam indicators detected. Continue exercising standard caution.",
-    medRiskTitle: "Caution: Suspicious Patterns Detected",
-    medRiskChip: "Verification Recommended",
-    medRiskDesc: "This message contains some suspicious financial patterns. Verify the sender before taking action.",
-  },
-  ta: {
-    alertText: "போலி மின் கட்டணம் மற்றும் வங்கி KYC SMS மோசடிகள் இந்த வாரம் அதிகரித்துள்ளன. எச்சரிக்கையாக இருங்கள்.",
-    heroHeading: 'நிதி மோசடிகளுக்கு எதிராக <span class="text-primary underline decoration-primary-fixed-dim decoration-4 underline-offset-4">ஒரு படி முன்னால் இருங்கள்</span>.',
-    heroSubheading: "பணம் அனுப்புவதற்கு அல்லது ரகசிய விவரங்களை பகிர்வதற்கு முன் சந்தேகத்திற்கிடமான செய்திகளை ஆய்வு செய்யுங்கள். SMS, WhatsApp மற்றும் ஸ்கிரீன்ஷாட்களுக்கான உடனடி AI பாதுகாப்பு.",
-    heroBtnAnalyze: "செய்தியை ஆய்வு செய்",
-    heroBtnUpload: "ஸ்கிரீன்ஷாட் பதிவேற்று",
-    analyzeHeading: "சந்தேகத்திற்கிடமான செய்தியை ஆய்வு செய்",
-    analyzeSubheading: "நீங்கள் பெற்ற செய்தியை உள்ளிடவும். எங்களின் AI மோசடி வடிவங்கள் மற்றும் போலி அவசர கோரிக்கைகளை நொடிகளில் கண்டறியும்.",
-    btnAnalyze: "செய்தியை ஆய்வு செய்",
-    highRiskTitle: "அதிக ஆபத்தான நிதி மோசடி கண்டறியப்பட்டது",
-    highRiskChip: "உடனடி எச்சரிக்கை தேவை",
-    highRiskDesc: "பணம் அனுப்பவோ, QR குறியீட்டை ஸ்கேன் செய்யவோ, அல்லது OTP/கடவுச்சொல்லை பகிரவோ வேண்டாம்.",
-    lowRiskTitle: "பாதுகாப்பான / குறைந்த ஆபத்துடைய செய்தி",
-    lowRiskChip: "மோசடி குறிகாட்டிகள் இல்லை",
-    lowRiskDesc: "பெரிய நிதி மோசடி குறிகாட்டிகள் எதுவும் கண்டறியப்படவில்லை. தொடர்ந்து கவனமாக இருங்கள்.",
-    medRiskTitle: "எச்சரிக்கை: சந்தேகத்திற்கிடமான வடிவங்கள்",
-    medRiskChip: "சரிபார்ப்பு பரிந்துரைக்கப்படுகிறது",
-    medRiskDesc: "இந்த செய்தியில் சில சந்தேகத்திற்கிடமான நிதி வடிவங்கள் உள்ளன. நடவடிக்கை எடுக்கும் முன் அனுப்புநரை சரிபார்க்கவும்.",
-  },
+// Example messages for "Try an example"
+const EXAMPLES = {
+  kyc: "Dear Customer, your SBI account will be blocked today. Update your KYC immediately at sbi-kyc-update.xyz/login or call 98765 43210.",
+  prize: "Congratulations! You have won ₹5,00,000 in the KBC lucky draw. Pay ₹2,000 processing fee to claim your prize.",
+  arrest: "This is Mumbai Police Crime Branch. A parcel containing drugs was found in your name. You are under digital arrest. Stay on the video call and do not tell anyone.",
+  tamil: "உங்கள் வங்கி கணக்கு இன்று முடக்கப்படும். KYC update செய்ய உடனே ₹2000 அனுப்பவும்.",
+  safe: "Hi! Your Amazon order has been delivered. Track it at https://www.amazon.in/orders",
 };
 
 // ---------------------------------------------------------------------------
 // App Initialization
 // ---------------------------------------------------------------------------
-document.addEventListener("DOMContentLoaded", async () => {
-  initLanguage();
+document.addEventListener("DOMContentLoaded", () => {
+  setScanMode("text");
+  highlightNav("scan");
   checkAuth();
   updateHistoryCountBadge();
-  setupDropzone();
 });
 
 // ---------------------------------------------------------------------------
-// Navigation & Router
+// Navigation
 // ---------------------------------------------------------------------------
+const VIEWS = ["scan", "processing", "result", "history", "community", "quiz", "emergency"];
+// Views that belong to a nav tab (processing/result count as "scan")
+const NAV_FOR_VIEW = { scan: "scan", processing: "scan", result: "scan", history: "history", community: "community", quiz: "quiz" };
+
+function highlightNav(viewName) {
+  const active = NAV_FOR_VIEW[viewName];
+  ["scan", "community", "quiz", "history"].forEach((tab) => {
+    const on = tab === active;
+    const desktop = document.getElementById(`nav-${tab}`);
+    if (desktop) {
+      desktop.classList.toggle("bg-surface-container-lowest", on);
+      desktop.classList.toggle("text-primary", on);
+      desktop.classList.toggle("shadow-sm", on);
+    }
+    const phone = document.getElementById(`mnav-${tab}`);
+    if (phone) phone.classList.toggle("text-primary", on);
+  });
+}
+
 function navigateTo(viewName) {
-  const views = ["home", "analyze", "upload", "processing", "result", "history", "community", "quiz", "emergency", "settings"];
-  views.forEach((v) => {
+  if (!VIEWS.includes(viewName)) viewName = "scan";
+  VIEWS.forEach((v) => {
     const el = document.getElementById(`view-${v}`);
-    if (el) el.classList.add("hidden");
-    const navBtn = document.getElementById(`nav-${v}`);
-    if (navBtn) {
-      navBtn.classList.remove("bg-surface-container-high", "text-primary", "font-bold");
-      navBtn.classList.add("text-on-surface-variant", "font-semibold");
-    }
+    if (el) el.classList.toggle("hidden", v !== viewName);
   });
+  highlightNav(viewName);
+  window.scrollTo({ top: 0, behavior: "smooth" });
 
-  const targetView = document.getElementById(`view-${viewName}`);
-  if (targetView) {
-    targetView.classList.remove("hidden");
-    targetView.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  const activeNav = document.getElementById(`nav-${viewName}`);
-  if (activeNav) {
-    activeNav.classList.add("bg-surface-container-high", "text-primary", "font-bold");
-    activeNav.classList.remove("text-on-surface-variant");
-  }
-
-  if (viewName === "history") {
-    loadHistoryData();
-  }
-  if (viewName === "quiz" && !state.quiz) {
-    startQuiz();
-  }
-  if (viewName === "emergency" && !state.emergencyGuide) {
-    loadEmergencyGuide(state.emergencyIncident || "upi_payment");
-  }
-  if (viewName === "community") {
-    initCommunityView();
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Language Support (Bilingual EN / தமிழ்)
-// ---------------------------------------------------------------------------
-function setAppLanguage(lang) {
-  state.currentLanguage = lang;
-  localStorage.setItem("scamshield_lang", lang);
-
-  const btnEn = document.getElementById("btn-lang-en");
-  const btnTa = document.getElementById("btn-lang-ta");
-
-  if (lang === "ta") {
-    btnTa.classList.add("bg-surface-container-lowest", "text-on-surface", "shadow-sm", "font-bold");
-    btnTa.classList.remove("text-on-surface-variant");
-    btnEn.classList.remove("bg-surface-container-lowest", "text-on-surface", "shadow-sm", "font-bold");
-    btnEn.classList.add("text-on-surface-variant");
-  } else {
-    btnEn.classList.add("bg-surface-container-lowest", "text-on-surface", "shadow-sm", "font-bold");
-    btnEn.classList.remove("text-on-surface-variant");
-    btnTa.classList.remove("bg-surface-container-lowest", "text-on-surface", "shadow-sm", "font-bold");
-    btnTa.classList.add("text-on-surface-variant");
-  }
-
-  applyTranslations(lang);
-}
-
-function initLanguage() {
-  setAppLanguage(state.currentLanguage);
-}
-
-function applyTranslations(lang) {
-  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-  const alertEl = document.getElementById("home-alert-text");
-  if (alertEl) alertEl.textContent = t.alertText;
-
-  const heroHeadingEl = document.getElementById("hero-heading");
-  if (heroHeadingEl) heroHeadingEl.innerHTML = t.heroHeading;
-
-  const heroSubEl = document.getElementById("hero-subheading");
-  if (heroSubEl) heroSubEl.textContent = t.heroSubheading;
-
-  const heroBtnA = document.getElementById("hero-btn-analyze");
-  if (heroBtnA) heroBtnA.textContent = t.heroBtnAnalyze;
-
-  const heroBtnU = document.getElementById("hero-btn-upload");
-  if (heroBtnU) heroBtnU.textContent = t.heroBtnUpload;
-
-  const analyzeHeadingEl = document.getElementById("analyze-heading");
-  if (analyzeHeadingEl) analyzeHeadingEl.textContent = t.analyzeHeading;
-
-  const analyzeSubEl = document.getElementById("analyze-subheading");
-  if (analyzeSubEl) analyzeSubEl.textContent = t.analyzeSubheading;
-
-  const btnSubmitA = document.getElementById("btn-submit-analyze-text");
-  if (btnSubmitA) btnSubmitA.textContent = t.btnAnalyze;
-}
-
-function setInputLanguage(langCode) {
-  state.selectedInputLanguage = langCode;
-  ["auto", "en", "ta"].forEach((l) => {
-    const pill = document.getElementById(`pill-lang-${l}`);
-    if (pill) {
-      if (l === langCode) {
-        pill.classList.add("bg-surface-container-lowest", "text-on-surface", "shadow-sm", "font-bold");
-        pill.classList.remove("text-on-surface-variant");
-      } else {
-        pill.classList.remove("bg-surface-container-lowest", "text-on-surface", "shadow-sm", "font-bold");
-        pill.classList.add("text-on-surface-variant");
-      }
-    }
-  });
+  if (viewName === "history") loadHistoryData();
+  if (viewName === "quiz" && !state.quiz) startQuiz();
+  if (viewName === "emergency" && !state.emergencyGuide) loadEmergencyGuide(state.emergencyIncident || "upi_payment");
+  if (viewName === "community") initCommunityView();
 }
 
 // ---------------------------------------------------------------------------
@@ -356,96 +208,73 @@ function logout() {
 }
 
 // ---------------------------------------------------------------------------
-// Demo Pre-population
+// Scan input: paste text or upload a screenshot
 // ---------------------------------------------------------------------------
-function fillQuickScamDemo(type) {
-  const input = document.getElementById("messageInput");
-  if (type === "kyc") {
-    input.value = DEMO_CASES[1].text;
-    setInputLanguage("en");
-  } else if (type === "lottery") {
-    input.value = DEMO_CASES[2].text;
-    setInputLanguage("en");
-  } else if (type === "tamil") {
-    input.value = DEMO_CASES[5].text;
-    setInputLanguage("ta");
-  }
-  updateCharCount();
+function setScanMode(mode) {
+  state.scanMode = mode;
+  const on = ["bg-surface-container-lowest", "text-primary", "shadow-sm"];
+  const off = ["text-on-surface-variant"];
+  const tabs = { text: document.getElementById("tab-text"), image: document.getElementById("tab-image") };
+  Object.entries(tabs).forEach(([key, el]) => {
+    on.forEach((c) => el.classList.toggle(c, key === mode));
+    off.forEach((c) => el.classList.toggle(c, key !== mode));
+    el.setAttribute("aria-selected", key === mode ? "true" : "false");
+  });
+  document.getElementById("scan-text-panel").classList.toggle("hidden", mode !== "text");
+  document.getElementById("scan-image-panel").classList.toggle("hidden", mode !== "image");
 }
 
-function runPrebuiltDemo(demoId) {
-  const demo = DEMO_CASES[demoId];
-  if (!demo) return;
-  navigateTo("analyze");
-  const input = document.getElementById("messageInput");
-  input.value = demo.text;
-  setInputLanguage(demo.language);
+function fillExample(key) {
+  setScanMode("text");
+  document.getElementById("messageInput").value = EXAMPLES[key] || "";
   updateCharCount();
-  handleAnalyzeMessageSubmit();
 }
 
 function updateCharCount() {
-  const input = document.getElementById("messageInput");
-  const count = document.getElementById("charCount");
-  if (input && count) {
-    count.textContent = `${input.value.length} / 2,500`;
-  }
+  const len = document.getElementById("messageInput").value.length;
+  document.getElementById("charCount").textContent = `${len.toLocaleString("en-IN")} / 2,500`;
 }
 
-function clearMessageInput() {
-  const input = document.getElementById("messageInput");
-  if (input) input.value = "";
+function newScan() {
+  document.getElementById("messageInput").value = "";
   updateCharCount();
-}
-
-// ---------------------------------------------------------------------------
-// File Upload & OCR Handling
-// ---------------------------------------------------------------------------
-function setupDropzone() {
-  const dropzone = document.getElementById("dropzone");
-  if (!dropzone) return;
+  clearSelectedFile();
+  navigateTo("scan");
 }
 
 function handleDragOver(e) {
   e.preventDefault();
-  e.stopPropagation();
   document.getElementById("dropzone").classList.add("border-primary", "bg-surface-container");
 }
 
 function handleDragLeave(e) {
   e.preventDefault();
-  e.stopPropagation();
   document.getElementById("dropzone").classList.remove("border-primary", "bg-surface-container");
 }
 
 function handleFileDrop(e) {
   e.preventDefault();
-  e.stopPropagation();
-  document.getElementById("dropzone").classList.remove("border-primary", "bg-surface-container");
-  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-    setUploadedFile(e.dataTransfer.files[0]);
-  }
+  handleDragLeave(e);
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) setUploadedFile(e.dataTransfer.files[0]);
 }
 
 function handleFileSelect(e) {
-  if (e.target.files && e.target.files[0]) {
-    setUploadedFile(e.target.files[0]);
-  }
+  if (e.target.files && e.target.files[0]) setUploadedFile(e.target.files[0]);
 }
 
 function setUploadedFile(file) {
-  state.selectedFile = file;
-  const card = document.getElementById("file-preview-card");
-  const nameEl = document.getElementById("preview-filename");
-  const sizeEl = document.getElementById("preview-filesize");
-  const dropzone = document.getElementById("dropzone");
-
-  if (card && nameEl && sizeEl) {
-    nameEl.textContent = file.name;
-    sizeEl.textContent = `${(file.size / 1024).toFixed(1)} KB`;
-    card.classList.remove("hidden");
-    dropzone.classList.add("border-primary/50");
+  if (!file.type.startsWith("image/")) {
+    showToast("Please choose an image file (PNG, JPG or WEBP).", "error");
+    return;
   }
+  state.selectedFile = file;
+  if (state.previewUrl) URL.revokeObjectURL(state.previewUrl);
+  state.previewUrl = URL.createObjectURL(file);
+  document.getElementById("preview-image").src = state.previewUrl;
+  document.getElementById("preview-filename").textContent = file.name;
+  document.getElementById("preview-filesize").textContent = `${(file.size / 1024).toFixed(0)} KB`;
+  document.getElementById("file-preview-card").classList.remove("hidden");
+  document.getElementById("dropzone").classList.add("hidden");
 }
 
 function clearSelectedFile(e) {
@@ -453,276 +282,213 @@ function clearSelectedFile(e) {
   state.selectedFile = null;
   document.getElementById("screenshotFileInput").value = "";
   document.getElementById("file-preview-card").classList.add("hidden");
-  document.getElementById("dropzone").classList.remove("border-primary/50");
+  document.getElementById("dropzone").classList.remove("hidden");
 }
 
 // ---------------------------------------------------------------------------
-// Analysis Execution & Multi-stage Processing
+// Scanner
 // ---------------------------------------------------------------------------
-async function handleAnalyzeMessageSubmit() {
+const SCAN_CHECKS = {
+  text: ["Reading the message", "Checking links and where they really go", "Looking for OTP, PIN and money requests",
+         "Checking who it claims to be from", "Comparing with community reports"],
+  image: ["Reading text from the screenshot", "Checking links and where they really go", "Looking for OTP, PIN and money requests",
+          "Checking who it claims to be from", "Comparing with community reports"],
+};
+const MIN_SCAN_MS = 2200; // long enough for one clear pass of the beam over every check
+
+function renderScannerChecks(done, total, labels) {
+  document.getElementById("scanner-checks").innerHTML = labels
+    .map((label, i) => {
+      const icon = i < done ? "check_circle" : i === done ? "progress_activity" : "radio_button_unchecked";
+      const color = i < done ? "text-emerald-400" : i === done ? "text-sky-300" : "text-slate-500";
+      return `<div class="flex items-center gap-2 ${color}"><span class="material-symbols-outlined text-[16px] ${i === done ? "animate-spin" : ""}">${icon}</span>${escapeHtml(label)}</div>`;
+    })
+    .join("");
+  document.getElementById("scanner-percent").textContent = `${Math.round((done / total) * 100)}%`;
+}
+
+function startScannerAnimation(mode, text) {
+  const labels = SCAN_CHECKS[mode];
+  const doc = document.getElementById("scanner-doc");
+  const img = document.getElementById("scanner-image");
+  document.getElementById("scanner-mode").textContent = mode === "image" ? "SCANNING SCREENSHOT" : "SCANNING MESSAGE";
+  document.getElementById("scanner-dot").className = "w-2 h-2 rounded-full bg-sky-400 animate-pulse";
+  document.getElementById("scanner-beam").classList.remove("done");
+  document.getElementById("scanner-result-line").textContent = "";
+  doc.classList.remove("scan-reveal");
+
+  if (mode === "image") {
+    doc.classList.add("hidden");
+    img.classList.remove("hidden");
+    img.src = state.previewUrl;
+  } else {
+    img.classList.add("hidden");
+    doc.classList.remove("hidden");
+    doc.textContent = text;
+  }
+
+  navigateTo("processing");
+  let done = 0;
+  renderScannerChecks(done, labels.length, labels);
+  // Tick checks off steadily, but never finish the last one before the server answers.
+  const stepMs = MIN_SCAN_MS / labels.length;
+  const timer = setInterval(() => {
+    if (done < labels.length - 1) {
+      done += 1;
+      renderScannerChecks(done, labels.length, labels);
+    }
+  }, stepMs);
+  return { labels, timer, startedAt: Date.now() };
+}
+
+async function finishScannerAnimation(scan, analysis) {
+  const wait = MIN_SCAN_MS - (Date.now() - scan.startedAt);
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  clearInterval(scan.timer);
+  renderScannerChecks(scan.labels.length, scan.labels.length, scan.labels);
+  document.getElementById("scanner-beam").classList.add("done");
+
+  // Reveal the red flags on the scanned document itself.
+  const doc = document.getElementById("scanner-doc");
+  const highlights = analysis.highlights || [];
+  if (state.scanMode === "image") {
+    // Show what was read from the screenshot, with highlights.
+    document.getElementById("scanner-image").classList.add("hidden");
+    doc.classList.remove("hidden");
+  }
+  doc.innerHTML = renderHighlightedText(analysis.raw_text || "", highlights);
+  doc.classList.add("scan-reveal");
+
+  const verdict = analysis.verdict || "SAFE";
+  const flags = (analysis.indicators || []).length;
+  const dot = { SCAM: "bg-red-500", SUSPICIOUS: "bg-amber-400", SAFE: "bg-emerald-400" }[verdict];
+  document.getElementById("scanner-dot").className = `w-2 h-2 rounded-full ${dot}`;
+  document.getElementById("scanner-mode").textContent = "SCAN COMPLETE";
+  document.getElementById("scanner-result-line").textContent =
+    flags ? `Found ${flags} warning sign${flags === 1 ? "" : "s"}` : "No warning signs found";
+
+  await new Promise((r) => setTimeout(r, 1300));
+  renderResultView(analysis);
+  navigateTo("result");
+}
+
+async function startScan() {
+  const mode = state.scanMode;
   const text = document.getElementById("messageInput").value.trim();
-  if (!text) {
-    showToast("Please paste or type a message to analyze.", "error");
+  if (mode === "text" && !text) {
+    showToast("Paste the message you want to check first.", "error");
+    return;
+  }
+  if (mode === "image" && !state.selectedFile) {
+    showToast("Choose a screenshot to scan first.", "error");
     return;
   }
 
-  startProcessingAnimation();
-
+  const scan = startScannerAnimation(mode, text);
   try {
-    const headers = { "Content-Type": "application/json" };
-    if (state.token) headers["Authorization"] = `Bearer ${state.token}`;
-
-    const res = await fetch(`${state.apiBaseUrl}/analyze/message`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        message: text,
-        language: state.selectedInputLanguage,
-      }),
-    });
-
-    const data = await res.json();
-    if (!res.ok || !data.success) {
-      throw new Error(data.message || (data.error && data.error.message) || "Analysis failed");
-    }
-
-    state.currentAnalysis = data.data;
-    completeProcessingAndShowResult();
-    updateHistoryCountBadge();
-  } catch (err) {
-    navigateTo("analyze");
-    showToast("Error during scam analysis: " + err.message, "error");
-  }
-}
-
-async function handleAnalyzeScreenshotSubmit() {
-  if (!state.selectedFile) {
-    showToast("Please select or drop a screenshot image file.", "error");
-    return;
-  }
-
-  startProcessingAnimation();
-
-  try {
-    const formData = new FormData();
-    formData.append("file", state.selectedFile);
-    if (state.selectedInputLanguage && state.selectedInputLanguage !== "auto") {
-      formData.append("language", state.selectedInputLanguage);
-    }
-
     const headers = {};
     if (state.token) headers["Authorization"] = `Bearer ${state.token}`;
-
-    const res = await fetch(`${state.apiBaseUrl}/analyze/image`, {
-      method: "POST",
-      headers,
-      body: formData,
-    });
-
+    let res;
+    if (mode === "text") {
+      headers["Content-Type"] = "application/json";
+      res = await fetch(`${state.apiBaseUrl}/analyze/message`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ message: text, language: "auto" }),
+      });
+    } else {
+      const formData = new FormData();
+      formData.append("file", state.selectedFile);
+      res = await fetch(`${state.apiBaseUrl}/analyze/image`, { method: "POST", headers, body: formData });
+    }
     const data = await res.json();
-    if (!res.ok || !data.success) {
-      throw new Error(data.message || (data.error && data.error.message) || "Screenshot OCR analysis failed");
-    }
-
+    if (!res.ok || !data.success) throw new Error(data.message || "The scan failed. Please try again.");
     state.currentAnalysis = data.data;
-    completeProcessingAndShowResult();
     updateHistoryCountBadge();
+    await finishScannerAnimation(scan, data.data);
   } catch (err) {
-    navigateTo("upload");
-    showToast("Error during screenshot analysis: " + err.message, "error");
+    clearInterval(scan.timer);
+    navigateTo("scan");
+    showToast(err.message, "error");
   }
 }
 
-function startProcessingAnimation() {
-  navigateTo("processing");
-  const bar = document.getElementById("processing-bar-fill");
-  const percentText = document.getElementById("processing-percent-text");
-  const circle = document.getElementById("processing-circle-stroke");
-
-  let progress = 15;
-  bar.style.width = "15%";
-  percentText.textContent = "15%";
-
-  const interval = setInterval(() => {
-    progress += Math.floor(Math.random() * 20) + 10;
-    if (progress >= 90) {
-      progress = 90;
-      clearInterval(interval);
-    }
-    bar.style.width = `${progress}%`;
-    percentText.textContent = `${progress}%`;
-
-    // Highlight sequential steps
-    if (progress > 30) highlightStep(2);
-    if (progress > 55) highlightStep(3);
-    if (progress > 75) highlightStep(4);
-    if (progress >= 90) highlightStep(5);
-  }, 200);
-
-  state._processingInterval = interval;
-}
-
-function highlightStep(stepNum) {
-  const stepEl = document.getElementById(`step-${stepNum}`);
-  if (stepEl) {
-    stepEl.classList.remove("opacity-60");
-    const icon = document.getElementById(`step-${stepNum}-icon`);
-    if (icon) {
-      icon.textContent = "check_circle";
-      icon.classList.remove("text-outline-variant", "animate-spin", "text-primary");
-      icon.classList.add("text-tertiary", "font-bold");
-    }
-  }
-}
-
-function completeProcessingAndShowResult() {
-  if (state._processingInterval) clearInterval(state._processingInterval);
-  const bar = document.getElementById("processing-bar-fill");
-  const percentText = document.getElementById("processing-percent-text");
-  if (bar) bar.style.width = "100%";
-  if (percentText) percentText.textContent = "100%";
-
-  setTimeout(() => {
-    renderResultView(state.currentAnalysis);
-    navigateTo("result");
-  }, 400);
-}
-
 // ---------------------------------------------------------------------------
-// Dynamic Result View Rendering (High / Medium / Low Risk)
+// Result
 // ---------------------------------------------------------------------------
+const VERDICT_STYLES = {
+  SCAM: { banner: "bg-error text-on-error", pill: "bg-on-error text-error", icon: "dangerous", why: "Why this looks like a scam" },
+  SUSPICIOUS: { banner: "bg-amber-400 text-amber-950", pill: "bg-amber-950 text-amber-50", icon: "gpp_maybe", why: "Why you should be careful" },
+  SAFE: { banner: "bg-tertiary text-on-tertiary", pill: "bg-on-tertiary text-tertiary", icon: "verified_user", why: "What we checked" },
+};
+const SEVERITY_DOT = { CRITICAL: "bg-red-600", HIGH: "bg-red-500", MEDIUM: "bg-amber-500", LOW: "bg-sky-500" };
+
 function renderResultView(analysis) {
   if (!analysis) return;
-
-  const score = Math.round(analysis.risk ? analysis.risk.score : (analysis.risk_score || 0));
-  const level = (analysis.risk ? analysis.risk.level : (analysis.risk_level || "LOW")).toUpperCase();
-  // Server verdict: SAFE / SUSPICIOUS / SCAM (older records fall back to the risk level)
+  state.currentAnalysis = analysis;
+  const score = Math.round(analysis.risk ? analysis.risk.score : analysis.risk_score || 0);
   const verdict = analysis.verdict || (score >= 60 ? "SCAM" : score >= 30 ? "SUSPICIOUS" : "SAFE");
-  const isHigh = verdict === "SCAM";
-  const isMed = verdict === "SUSPICIOUS";
-  const isLow = !isHigh && !isMed;
+  const style = VERDICT_STYLES[verdict];
 
-  // Banner configuration
-  const banner = document.getElementById("result-banner");
-  const bannerTitle = document.getElementById("result-banner-title");
-  const bannerChip = document.getElementById("result-banner-chip");
-  const bannerDesc = document.getElementById("result-banner-desc");
-  const bannerIcon = document.getElementById("result-banner-icon");
-  const verdictBadge = document.getElementById("result-verdict-badge");
-  const verdictText = document.getElementById("result-verdict-text");
-  const scoreNumber = document.getElementById("result-score-number");
-  const gaugeFill = document.getElementById("result-gauge-fill");
+  // Verdict banner
+  document.getElementById("result-banner").className = `rounded-2xl p-6 shadow-lg mb-5 flex items-start gap-4 ${style.banner}`;
+  document.getElementById("result-banner-icon").textContent = style.icon;
+  document.getElementById("result-verdict-text").textContent = verdict;
+  const pill = document.getElementById("result-score-pill");
+  pill.className = `px-2.5 py-0.5 rounded-full text-xs font-bold ${style.pill}`;
+  pill.textContent = `Risk ${score} / 100`;
+  document.getElementById("result-verdict-label").textContent = (analysis.verdict_label || "").replace(/^\w+ – /, "");
+  const category = analysis.category_title || "";
+  document.getElementById("result-category").textContent =
+    verdict === "SAFE" || !category ? "" : `Looks like: ${category}`;
 
-  scoreNumber.textContent = score;
-
-  // Calculate SVG stroke offset for 314.159 perimeter (120 viewBox with r=50)
-  const offset = 314.159 - (314.159 * score) / 100;
-  gaugeFill.style.strokeDashoffset = `${offset}`;
-
-  const lang = state.currentLanguage;
-  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
-
-  if (isHigh) {
-    banner.className = "relative overflow-hidden rounded-xl shadow-xl p-6 mb-6 text-on-error bg-error transition-all";
-    bannerTitle.textContent = t.highRiskTitle;
-    bannerChip.textContent = t.highRiskChip;
-    bannerChip.className = "px-2.5 py-0.5 rounded-full bg-on-error text-error text-xs uppercase font-bold tracking-wider";
-    bannerDesc.textContent = t.highRiskDesc;
-    bannerIcon.textContent = "warning";
-    verdictBadge.className = "px-3 py-1 rounded-full bg-error text-on-error text-xs font-bold tracking-wide shadow-sm flex items-center gap-1.5";
-    verdictText.textContent = "SCAM";
-    scoreNumber.className = "font-display text-4xl font-extrabold text-error leading-none tracking-tight";
-    gaugeFill.className = "text-error transition-all duration-1000 ease-out";
-  } else if (isMed) {
-    banner.className = "relative overflow-hidden rounded-xl shadow-xl p-6 mb-6 text-amber-950 bg-amber-400 transition-all";
-    bannerTitle.textContent = t.medRiskTitle;
-    bannerChip.textContent = t.medRiskChip;
-    bannerChip.className = "px-2.5 py-0.5 rounded-full bg-amber-900 text-amber-50 text-xs uppercase font-bold tracking-wider";
-    bannerDesc.textContent = t.medRiskDesc;
-    bannerIcon.textContent = "gpp_maybe";
-    verdictBadge.className = "px-3 py-1 rounded-full bg-amber-500 text-amber-950 text-xs font-bold tracking-wide shadow-sm flex items-center gap-1.5";
-    verdictText.textContent = "SUSPICIOUS";
-    scoreNumber.className = "font-display text-4xl font-extrabold text-amber-600 leading-none tracking-tight";
-    gaugeFill.className = "text-amber-500 transition-all duration-1000 ease-out";
-  } else {
-    banner.className = "relative overflow-hidden rounded-xl shadow-xl p-6 mb-6 text-on-tertiary bg-tertiary transition-all";
-    bannerTitle.textContent = t.lowRiskTitle;
-    bannerChip.textContent = t.lowRiskChip;
-    bannerChip.className = "px-2.5 py-0.5 rounded-full bg-on-tertiary text-tertiary text-xs uppercase font-bold tracking-wider";
-    bannerDesc.textContent = t.lowRiskDesc;
-    bannerIcon.textContent = "verified_user";
-    verdictBadge.className = "px-3 py-1 rounded-full bg-tertiary-container text-on-tertiary-container text-xs font-bold tracking-wide shadow-sm flex items-center gap-1.5";
-    verdictText.textContent = "SAFE";
-    scoreNumber.className = "font-display text-4xl font-extrabold text-tertiary leading-none tracking-tight";
-    gaugeFill.className = "text-tertiary transition-all duration-1000 ease-out";
-  }
-
-  // Category & Confidence
-  const categoryTitle = analysis.category_title || (analysis.scam ? analysis.scam.category_label : "Scam Assessment");
-  document.getElementById("result-category-title").textContent = categoryTitle;
-  
-  const conf = Math.round(((analysis.risk && analysis.risk.confidence) || analysis.language_confidence || 0.95) * 100);
-  document.getElementById("result-confidence-text").textContent = `${conf}%`;
-  document.getElementById("result-confidence-bar").style.width = `${conf}%`;
-
-  // Raw Quote with red-flag highlighting
+  // Message with highlights
   const rawText = analysis.raw_text || analysis.cleaned_text || "";
   const highlights = analysis.highlights || [];
   document.getElementById("result-raw-text-quote").innerHTML = renderHighlightedText(rawText, highlights);
   document.getElementById("result-highlight-legend").classList.toggle("hidden", highlights.length === 0);
-  renderLinkXray(analysis.link_xray || []);
-  document.getElementById("btn-warn-family").classList.toggle("hidden", verdict === "SAFE");
-  document.getElementById("btn-report-community").classList.toggle("hidden", verdict === "SAFE");
-  document.getElementById("btn-emergency-from-result").classList.toggle("hidden", verdict === "SAFE");
-  document.getElementById("result-input-source-badge").textContent = analysis.input_type === "screenshot" ? "Screenshot OCR" : "Message Text";
-  document.getElementById("result-scan-id-label").textContent = `Scan #${(analysis.analysis_id || analysis.id || "REC").slice(0, 8)}`;
-  document.getElementById("result-analysis-mode-label").textContent = analysis.analysis_mode === "fallback_rules" ? "Heuristic Rules Mode" : "AI + Rules Active";
+  document.getElementById("result-input-source-badge").textContent =
+    analysis.input_type === "screenshot" ? "Read from screenshot" : "Pasted text";
 
-  // Detected Language
-  const langCode = analysis.detected_language || (analysis.language && analysis.language.code) || "en";
-  document.getElementById("result-lang-label").textContent = `Detected: ${langCode === "ta" ? "தமிழ் (Tamil)" : "English"}`;
-
-  // Red Flag Indicators Chips
-  const chipsContainer = document.getElementById("result-indicators-chips");
-  chipsContainer.innerHTML = "";
+  // Why: one clear list of red flags
+  document.getElementById("result-why-title").textContent = style.why;
   const indicators = analysis.indicators || [];
+  document.getElementById("result-red-flags").innerHTML = indicators.length
+    ? indicators
+        .map((ind) => `
+          <li class="flex items-start gap-3">
+            <span class="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${SEVERITY_DOT[String(ind.severity).toUpperCase()] || "bg-sky-500"}"></span>
+            <span class="min-w-0">
+              <span class="block text-sm font-bold text-on-surface">${escapeHtml(ind.title || "")}</span>
+              <span class="block text-xs text-on-surface-variant leading-relaxed mt-0.5">${escapeHtml(ind.description || "")}</span>
+            </span>
+          </li>`)
+        .join("")
+    : `<li class="flex items-start gap-3 text-sm text-on-surface-variant">
+         <span class="material-symbols-outlined text-tertiary text-[20px]">check_circle</span>
+         <span>No requests for money, OTPs or passwords, no suspicious links, no pressure or threats. It still pays to be careful with messages from people you don't know.</span>
+       </li>`;
 
-  if (indicators.length === 0) {
-    chipsContainer.innerHTML = `<span class="text-xs text-tertiary font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">check</span> No threat red flags extracted</span>`;
-  } else {
-    indicators.forEach((ind) => {
-      const chip = document.createElement("div");
-      chip.className = "flex items-center gap-1.5 px-3 py-1 rounded-full bg-error-container text-on-error-container text-xs font-semibold";
-      chip.innerHTML = `
-        <span class="material-symbols-outlined text-[15px] text-error">flag</span>
-        <span>${escapeHtml(ind.title || ind.type)}: <strong>${escapeHtml(ind.evidence || ind.snippet || ind.description || "")}</strong></span>
-      `;
-      chipsContainer.appendChild(chip);
-    });
-  }
+  // Link X-ray
+  renderLinkXray(analysis.link_xray || []);
 
-  // Explanation
-  const explanationBox = document.getElementById("result-explanation-box");
-  explanationBox.textContent = analysis.explanation || "No suspicious deception tactics were detected.";
-  document.getElementById("result-quick-summary").textContent =
-    analysis.verdict_label || (analysis.explanation ? analysis.explanation.split("\n")[0] : "");
-
-  // Recommendations
-  const recsContainer = document.getElementById("result-recommendations-list");
-  recsContainer.innerHTML = "";
+  // What to do
   const recs = analysis.recommendations || [];
+  document.getElementById("result-recommendations-list").innerHTML = recs
+    .map((rec, i) => {
+      const text = typeof rec === "string" ? rec : rec.text;
+      return `
+        <li class="flex items-start gap-3">
+          <span class="w-6 h-6 rounded-full bg-surface-container text-primary text-xs font-bold flex items-center justify-center shrink-0">${i + 1}</span>
+          <span class="text-on-surface leading-snug pt-0.5">${escapeHtml(text)}</span>
+        </li>`;
+    })
+    .join("");
 
-  recs.forEach((rec, idx) => {
-    const text = typeof rec === "string" ? rec : rec.text;
-    const prio = typeof rec === "string" ? "high" : rec.priority;
-    const item = document.createElement("div");
-    item.className = "flex items-start gap-2.5 p-3 rounded-lg bg-surface-container-low border border-surface-container";
-    item.innerHTML = `
-      <span class="material-symbols-outlined text-[18px] text-tertiary shrink-0 mt-0.5">shield</span>
-      <span class="text-on-surface leading-snug font-medium">${escapeHtml(text)}</span>
-    `;
-    recsContainer.appendChild(item);
-  });
+  // Actions that only make sense for risky messages
+  ["btn-warn-family", "btn-report-community", "btn-emergency-from-result"].forEach((id) =>
+    document.getElementById(id).classList.toggle("hidden", verdict === "SAFE")
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -952,32 +718,6 @@ async function updateHistoryCountBadge() {
   } catch (e) {
     // Non-blocking
   }
-}
-
-// ---------------------------------------------------------------------------
-// Settings and Utilities
-// ---------------------------------------------------------------------------
-function saveApiSettings() {
-  const val = document.getElementById("apiBaseUrlInput").value.trim();
-  if (val) {
-    state.apiBaseUrl = val;
-    localStorage.setItem("scamshield_api_url", val);
-    showToast("Backend API URL updated to " + val, "success");
-  }
-}
-
-function copyAnalysisSummary() {
-  if (!state.currentAnalysis) return;
-  const a = state.currentAnalysis;
-  const score = a.risk ? a.risk.score : a.risk_score;
-  const text = `🛡️ ScamShield AI Scam Analysis Report\nRisk Score: ${score}/100 (${a.risk_level || (a.risk && a.risk.level)})\nCategory: ${a.category_title || (a.scam && a.scam.category_label)}\nExplanation:\n${a.explanation}\n\nAnalyzed with ScamShield AI before making payments.`;
-  navigator.clipboard.writeText(text).then(() => {
-    showToast("Safety report copied to clipboard!", "success");
-  });
-}
-
-function reportScamOnline() {
-  window.open("https://cybercrime.gov.in", "_blank");
 }
 
 // ---------------------------------------------------------------------------

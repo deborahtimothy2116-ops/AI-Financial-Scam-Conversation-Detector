@@ -25,23 +25,18 @@ ScamShield AI provides real-time, explainable fraud intelligence:
 
 ---
 
-## 🎨 Google Stitch Frontend Integration
+## 🖥️ Using the App
 
-The user interface was designed in **Google Stitch** (Project ID: `2517293446067344339`) and serves as the visual and interaction source of truth.
+The web app (served at `/`) is built around one question: **"Is this message a scam?"**
 
-### Integrated Stitch Screens:
-- **Home Dashboard (`home.html`)**: Live threat banner, neural radar telemetry simulation, quick analyzer tabs, metrics counter, and pre-built judge demo cards.
-- **Analyze Message (`analyze_message.html`)**: Text input area with PII sanitization status, demo pre-fill triggers, language selectors (`Auto`, `English`, `தமிழ்`), and evaluation telemetry.
-- **Upload Screenshot (`upload_screenshot.html`)**: Drag-and-drop OCR dropzone, file type/size validation, and multi-format parser (`PNG`, `JPG`, `WEBP`).
-- **Analysis Processing (`processing.html`)**: Animated radial progress dial with sequential 5-step pipeline loading.
-- **Dynamic Result Verdict Cards (`result_high.html`, `result_medium.html`, `result_low.html`)**:
-  - `HIGH / CRITICAL Risk`: Red-tier alert banner, radial 0–100 risk gauge, extracted trigger chips, and instant **Helpline 1930** button.
-  - `MEDIUM Risk`: Amber caution banner, warning badges, and sender verification guidelines.
-  - `LOW / SAFE Risk`: Emerald clean status with safe hygiene recommendations.
-- **Scan History (`history.html` & `history_detail.html`)**: Filterable timeline (All, High, Medium, Low), live search, per-user data isolation, and report inspection.
-- **Settings & Privacy (`settings.html`)**: Model status, OCR configuration, API base URL override, and privacy toggles.
+- **Scan** (home): paste a message or switch to *Upload screenshot*, then press **Scan now**, or try one of the example chips. A scanner window sweeps a beam over your message or screenshot while it ticks off each check (links, OTP/money requests, sender claims, community reports). When it finishes, the red flags light up on the message itself.
+- **Result**: a big **SAFE / SUSPICIOUS / SCAM** verdict with the risk score, then *What we found in the message* (highlighted), *Why* (one plain list of warning signs), *Where the links really go* (Link X-ray), and *What to do now*. Risky results add **Already paid? Get help now**, **Warn family on WhatsApp** and **Report scammer's number / UPI**.
+- **Check UPI**: look up a phone number, UPI ID, website or email before paying, and report scammers.
+- **Quiz**: practise spotting scams.
+- **History**: your past scans (when logged in).
+- **Scammed?** (red button): emergency action plan and complaint draft.
 
----
+On phones the tabs move to a bar under the header. The original Google Stitch screen exports are kept in `frontend_screens/` for design reference only; the app doesn't use them.
 
 ## 🏗️ Architecture & Clean Code Structure
 
@@ -87,7 +82,7 @@ AI-Financial-Scam-Conversation-Detector/
 │       ├── constants.py            # Scam categories, risk levels, regex patterns
 │       └── validators.py           # Text & image upload validation
 ├── frontend/
-│   ├── index.html                  # Single Page Application matching Stitch UI
+│   ├── index.html                  # Single-page app: Scan, Result, Check UPI, Quiz, History, Emergency
 │   ├── app.js                      # Vanilla JS API Client & controller
 │   ├── tailwind.css                # Compiled Tailwind stylesheet (no CDN needed)
 │   └── tailwind.config.js          # Design tokens from the Stitch screens
