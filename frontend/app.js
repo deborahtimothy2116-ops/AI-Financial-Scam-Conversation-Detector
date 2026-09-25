@@ -35,18 +35,65 @@ document.addEventListener("DOMContentLoaded", () => {
   highlightNav("scan");
   checkAuth();
   updateHistoryCountBadge();
+  registerServiceWorker();
+  receiveSharedContent();
 });
+
+// ---------------------------------------------------------------------------
+// Installable app: receive messages / screenshots shared from WhatsApp, SMS, Gallery
+// ---------------------------------------------------------------------------
+function registerServiceWorker() {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
+  }
+}
+
+async function receiveSharedContent() {
+  const params = new URLSearchParams(window.location.search);
+  let text = params.get("text") || "";
+  let file = null;
+
+  if (params.get("shared") === "1" && "caches" in window) {
+    try {
+      const inbox = await caches.open("scamshield-share-inbox");
+      const textRes = await inbox.match("/shared/text");
+      if (textRes) text = await textRes.text();
+      const fileRes = await inbox.match("/shared/file");
+      if (fileRes) {
+        const blob = await fileRes.blob();
+        const name = decodeURIComponent(fileRes.headers.get("X-File-Name") || "screenshot");
+        file = new File([blob], name, { type: blob.type || "image/png" });
+      }
+      await caches.delete("scamshield-share-inbox");
+    } catch (e) {
+      // Nothing shared, or storage unavailable.
+    }
+  }
+  if (!text.trim() && !file) return;
+
+  history.replaceState(null, "", "/");
+  if (file) {
+    setScanMode("image");
+    setUploadedFile(file);
+  } else {
+    setScanMode("text");
+    document.getElementById("messageInput").value = text.trim().slice(0, 2500);
+    updateCharCount();
+  }
+  showToast("Shared message received. Scanning now.", "info");
+  startScan();
+}
 
 // ---------------------------------------------------------------------------
 // Navigation
 // ---------------------------------------------------------------------------
-const VIEWS = ["scan", "processing", "result", "history", "community", "quiz", "emergency"];
+const VIEWS = ["scan", "processing", "result", "call", "payment", "history", "community", "quiz", "emergency"];
 // Views that belong to a nav tab (processing/result count as "scan")
-const NAV_FOR_VIEW = { scan: "scan", processing: "scan", result: "scan", history: "history", community: "community", quiz: "quiz", emergency: "emergency" };
+const NAV_FOR_VIEW = { scan: "scan", processing: "scan", result: "scan", call: "call", payment: "payment", history: "history", community: "community", quiz: "quiz", emergency: "emergency" };
 
 function highlightNav(viewName) {
   const active = NAV_FOR_VIEW[viewName];
-  ["scan", "community", "emergency", "history", "quiz"].forEach((tab) => {
+  ["scan", "call", "payment", "community", "emergency", "history", "quiz"].forEach((tab) => {
     const on = tab === active;
     const side = document.getElementById(`nav-${tab}`);
     if (side) side.classList.toggle("side-link-active", on);
@@ -72,6 +119,7 @@ function navigateTo(viewName) {
   if (viewName === "quiz" && !state.quiz) startQuiz();
   if (viewName === "emergency" && !state.emergencyGuide) loadEmergencyGuide(state.emergencyIncident || "upi_payment");
   if (viewName === "community") initCommunityView();
+  if (viewName === "call" && !state.callQuestions) loadCallQuestions();
 }
 
 // ---------------------------------------------------------------------------
@@ -411,6 +459,155 @@ async function startScan() {
     navigateTo("scan");
     showToast(err.message, "error");
   }
+}
+
+// ---------------------------------------------------------------------------
+// Check a call
+// ---------------------------------------------------------------------------
+async function loadCallQuestions() {
+  try {
+    const res = await fetch(`${state.apiBaseUrl}/call-check/questions`);
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || "Could not load questions");
+    state.callQuestions = data.data;
+    state.callAnswers = {};
+    renderCallQuestions();
+  } catch (err) {
+    document.getElementById("call-questions").innerHTML = `<li class="p-5 text-sm text-error">${escapeHtml(err.message)}. If they ask for money or an OTP, hang up and call 1930.</li>`;
+  }
+}
+
+function renderCallQuestions() {
+  document.getElementById("call-questions").innerHTML = state.callQuestions
+    .map((q, i) => {
+      const answer = state.callAnswers[q.id];
+      const btn = (value, label) => {
+        const on = answer === value;
+        const onCls = value ? "bg-error text-on-error border-error" : "bg-primary-fixed text-primary border-primary";
+        return `<button onclick="answerCall('${q.id}', ${value})" class="h-9 w-16 rounded-md border text-sm font-semibold ${on ? onCls : "bg-surface-container-lowest text-on-surface border-outline-variant hover:bg-surface-container-low"}">${label}</button>`;
+      };
+      return `
+        <li class="flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-4">
+          <span class="flex-1 text-sm text-on-surface"><span class="text-on-surface-variant mr-1">${i + 1}.</span>${escapeHtml(q.text)}</span>
+          <span class="flex gap-2 shrink-0">${btn(true, "Yes")}${btn(false, "No")}</span>
+        </li>`;
+    })
+    .join("");
+}
+
+async function answerCall(id, value) {
+  state.callAnswers[id] = value;
+  renderCallQuestions();
+  try {
+    const res = await fetch(`${state.apiBaseUrl}/call-check/assess`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answers: state.callAnswers }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || "Could not assess the call");
+    renderCallResult(data.data);
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+function renderCallResult(r) {
+  const style = VERDICT_STYLES[r.verdict];
+  document.getElementById("call-result").className = `panel border-l-4 lg:sticky lg:top-16 ${style.border}`;
+  document.getElementById("call-headline").textContent = r.headline;
+  document.getElementById("call-verdict-row").classList.remove("hidden");
+  const tag = document.getElementById("call-verdict-tag");
+  tag.className = style.tag;
+  tag.textContent = `${style.word} · ${r.score}/100`;
+  document.getElementById("call-type").textContent = r.scam_type || "";
+  document.getElementById("call-details").classList.remove("hidden");
+  document.getElementById("call-say").textContent = r.say_this;
+  document.getElementById("call-do").innerHTML = r.do_now.length
+    ? r.do_now.map((step, i) => `<li class="flex gap-3"><span class="w-5 h-5 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-semibold flex items-center justify-center shrink-0 mt-0.5">${i + 1}</span><span>${escapeHtml(step)}</span></li>`).join("")
+    : `<li class="text-on-surface-variant">Keep going with the questions as the call continues.</li>`;
+  document.getElementById("call-reasons").innerHTML = r.reasons.length
+    ? r.reasons.map((x) => `<li><span class="font-semibold text-on-surface">${escapeHtml(x.question)}</span> ${escapeHtml(x.why)}</li>`).join("")
+    : `<li>No warning signs answered yet.</li>`;
+}
+
+function resetCallCheck() {
+  state.callAnswers = {};
+  if (state.callQuestions) renderCallQuestions();
+  document.getElementById("call-result").className = "panel border-l-4 border-l-outline-variant lg:sticky lg:top-16";
+  document.getElementById("call-headline").textContent = "Answer the questions to see an assessment.";
+  document.getElementById("call-verdict-row").classList.add("hidden");
+  document.getElementById("call-details").classList.add("hidden");
+}
+
+// ---------------------------------------------------------------------------
+// Verify a payment
+// ---------------------------------------------------------------------------
+const PAY_STATUS = {
+  red_flags: { tag: "tag tag-negative", word: "Red flags", border: "border-l-error" },
+  caution: { tag: "tag tag-critical", word: "Check first", border: "border-l-amber-500" },
+  no_obvious_flags: { tag: "tag tag-neutral", word: "Not proof", border: "border-l-outline" },
+};
+const FLAG_TAGS = { high: ["tag tag-negative", "High"], medium: ["tag tag-critical", "Medium"], low: ["tag tag-info", "Low"] };
+
+function setPaymentFile(e) {
+  state.paymentFile = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+  document.getElementById("pay-file-label").textContent = state.paymentFile ? state.paymentFile.name : "Choose screenshot";
+}
+
+async function checkPaymentProof() {
+  const text = document.getElementById("pay-text").value.trim();
+  const amount = document.getElementById("pay-amount").value;
+  if (!state.paymentFile && !text) {
+    showToast("Choose the payment screenshot or paste its text first.", "error");
+    return;
+  }
+  const btn = document.getElementById("btn-check-payment");
+  btn.disabled = true;
+  btn.classList.add("opacity-60");
+  try {
+    const form = new FormData();
+    if (state.paymentFile) form.append("file", state.paymentFile);
+    else form.append("text", text);
+    if (amount) form.append("expected_amount", amount);
+    const res = await fetch(`${state.apiBaseUrl}/payment-proof/check`, { method: "POST", body: form });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || "Could not check the payment");
+    renderPaymentResult(data.data);
+  } catch (err) {
+    showToast(err.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove("opacity-60");
+  }
+}
+
+function renderPaymentResult(r) {
+  const s = PAY_STATUS[r.status];
+  const box = document.getElementById("pay-result");
+  box.className = `panel border-l-4 ${s.border}`;
+  document.getElementById("pay-headline").textContent = r.headline;
+  const tag = document.getElementById("pay-tag");
+  tag.className = s.tag;
+  tag.textContent = s.word;
+  const found = [
+    ["Amount", r.found.amounts.join(", ") || "Not found"],
+    ["Reference (UTR)", r.found.reference_numbers.join(", ") || "Not found"],
+    ["Date", r.found.dates.join(", ") || "Not found"],
+  ];
+  document.getElementById("pay-found").innerHTML = found
+    .map(([k, v]) => `<dt class="text-on-surface-variant">${k}</dt><dd class="text-on-surface font-medium">${escapeHtml(v)}</dd>`)
+    .join("");
+  document.getElementById("pay-flags").innerHTML = r.flags.length
+    ? r.flags.map((f) => {
+        const [cls, word] = FLAG_TAGS[f.severity] || FLAG_TAGS.low;
+        return `<tr><td><span class="${cls}">${word}</span></td><td><div class="font-semibold text-on-surface">${escapeHtml(f.title)}</div><div class="text-xs text-on-surface-variant mt-0.5">${escapeHtml(f.detail)}</div></td></tr>`;
+      }).join("")
+    : `<tr><td colspan="2" class="text-on-surface-variant">No red flags in the screenshot text. That still doesn't prove the money arrived.</td></tr>`;
+  document.getElementById("pay-steps").innerHTML = r.verify_steps
+    .map((step, i) => `<li class="flex gap-3"><span class="w-5 h-5 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-semibold flex items-center justify-center shrink-0 mt-0.5">${i + 1}</span><span>${escapeHtml(step)}</span></li>`)
+    .join("");
+  box.classList.remove("hidden");
 }
 
 // ---------------------------------------------------------------------------

@@ -229,6 +229,32 @@ Checks behind it, besides the scam-pattern rules (KYC, lottery, QR, OTP, remote 
 - **Check before you pay (community reports)**: look up any phone number, UPI ID, website or email to see whether other users reported it (`GET /api/v1/community/lookup?q=`). Logged-in users can report one (`POST /api/v1/community/reports`) or report every detail from a scam scan in one tap (`POST /api/v1/community/reports/from-analysis/{id}`). Every scan checks the message against reports: 1–2 reports make it at least SUSPICIOUS, 3+ make it SCAM. Safeguards: login required, one report per user per identifier, official brand domains and link shorteners can't be reported, and results always say reports are unverified.
 - **Digital-arrest scam detection**: flags fake police / CBI / customs calls that threaten "digital arrest", demand secrecy and a "verification" transfer, with advice that no agency arrests anyone over video call.
 
+## 📞 Beyond Messages: Calls, Payments, Sharing and Indian Languages
+
+- **Check a call** (`GET /api/v1/call-check/questions`, `POST /api/v1/call-check/assess`): the costliest scams (fake police "digital arrest", fake bank officers, OTP and remote-access calls) happen on calls, where there is nothing to paste. Ten yes/no questions about what the caller is doing give a live verdict while the call is still on, the scam type, a line to say ("I don't share OTPs or make payments on calls…"), and what to do next. Any request for an OTP/PIN, a remote-access app, secrecy or a transfer to a "safe account" is decisive on its own.
+- **Verify a payment** (`POST /api/v1/payment-proof/check`): for shopkeepers and sellers who are shown a fake, edited, pending or reused "payment successful" screenshot. It reads the screenshot and flags: payment pending/failed or only a *request*, amount not matching what you expected, missing 12-digit UPI reference, old or future date, and fake-payment-app watermarks. It never calls a screenshot genuine; it always says to confirm the credit in your own bank app first.
+- **Share to ScamShield** (installable web app): on Android, add ScamShield to the home screen and it appears in the Share menu of WhatsApp, Messages and Gallery. Sharing a message or screenshot opens ScamShield and scans it straight away, with no copying and pasting. Implemented with a web app manifest `share_target` and a service worker (`frontend/manifest.webmanifest`, `frontend/sw.js`).
+- **Hindi, Hinglish, Tamil and Tanglish**: native-language scam words (e.g. खाता बंद, तुरंत, ओटीपी बताएं, khata band, OTP batao, முடக்கப்படும், உடனே) are recognised and highlighted, so scams written entirely in these languages are caught (`app/services/multilingual.py`).
+
+## 📏 Measured Accuracy
+
+`benchmark/` holds labelled messages and an evaluation script:
+
+```bash
+python -m benchmark.evaluate --show-errors     # tuning set
+python -m benchmark.evaluate --holdout         # held-out set (never used for tuning)
+```
+
+A scam counts as caught when the verdict is SCAM or SUSPICIOUS; a genuine message is a false alarm when it isn't SAFE.
+
+| Set | Messages | Scams caught | Rated SCAM | Genuine wrongly flagged |
+|---|---|---|---|---|
+| Tuning set, before tuning | 48 scams / 44 genuine | 96% | 77% | 5% |
+| Tuning set, after tuning | 48 scams / 44 genuine | 100% | 81% | 0% |
+| **Held-out set** | 16 scams / 14 genuine | **81%** | 44% | **0%** |
+
+The held-out figure is the honest estimate. Its misses are reworded scams ("account temporarily restricted, re-verify…", "read out the code you got by SMS"), the known weakness of keyword rules; enabling an LLM provider (`LLM_PROVIDER` in `.env`) is the next step for those. Caveats: the messages were written by the developers to resemble real Indian scam and bank SMS, not collected from victims, and the sets are small. Genuine bank OTP messages, credit/debit alerts, bill reminders and KYC-at-branch notices are included specifically to guard against false alarms. `tests/test_new_tools.py` fails if tuning-set accuracy drops below 95% caught / above 5% false alarms.
+
 ## 🧠 Risk Scoring Engine Formula
 
 The Risk Engine combines signals to eliminate false negatives:

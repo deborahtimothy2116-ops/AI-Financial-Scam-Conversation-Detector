@@ -10,14 +10,56 @@ from app.core.logging import logger
 from app.core.exceptions import LLMServiceError
 from app.services.link_xray import xray_links
 from app.services.message_checks import run_message_checks
+from app.services.multilingual import english_cues
 from app.utils.constants import ScamCategory, IndicatorSeverity, REGEX_PATTERNS
 
-AUTHORITY_THREAT_OR_DEMAND = re.compile(
+AUTHORITY_THREAT = re.compile(
     r"\b(?:arrest\w*|warrant|legal action|summons|fir|case (?:is )?(?:registered|filed)|penalty|fine|"
-    r"disconnect\w*|power cut|block\w*|suspend\w*|seiz\w*|jail|pay|payment|transfer|fee|charges?|deposit|"
-    r"immediately|urgent\w*|tonight|within \d+)\b",
+    r"disconnect\w*|power cut|block\w*|suspend\w*|seiz\w*|jail)\b",
     re.IGNORECASE,
 )
+AUTHORITY_DEMAND = re.compile(r"\b(?:pay|payment|transfer|fee|charges?|deposit)\b", re.IGNORECASE)
+URGENCY_WORDS = re.compile(r"\b(?:immediately|urgent\w*|tonight|today|within \d+\s*\w*|last chance|right now)\b", re.IGNORECASE)
+
+# Genuine bank / OTP messages warn "do not share your OTP" or "we never ask for your PIN".
+# Remove those warnings before looking for a request for credentials.
+PROTECTIVE_PHRASE = re.compile(
+    r"\b(?:do not|don'?t|dont|never|not to|please do not|pls do not)\s+(?:share|disclose|tell|give|reveal|forward)\b[^.\n]*"
+    r"|\b(?:never|will never|does not|doesn'?t|do not|don'?t)\s+(?:ask|call|request|asks)\w*\b[^.\n]*",
+    re.IGNORECASE,
+)
+CREDENTIAL_WORD = re.compile(
+    r"\b(?:otp|one time password|upi pin|m?pin|cvv|password|passcode|"
+    r"(?:verification|security|secret|login|\d[- ]?digit)\s+code|code\s+(?:sent|received))\b",
+    re.IGNORECASE,
+)
+# A message that *delivers* an OTP ("482913 is your OTP", "use 918273 as your one time password")
+# only counts as a request if it explicitly asks you to share, tell or give it to someone.
+OTP_DELIVERY = re.compile(
+    r"\b\d{4,8}\s+is\s+your\b|\b(?:otp|code|password)\s+(?:is|:)\s*\d{4,8}\b|\buse\s+\d{4,8}\s+as\s+your\b",
+    re.IGNORECASE,
+)
+STRONG_CREDENTIAL_ASK = re.compile(r"\b(?:share|tell|give|forward|reply with|provide)\b", re.IGNORECASE)
+CREDENTIAL_ASK = re.compile(r"\b(?:share|send|tell|give|provide|enter|verify|confirm|forward|reply with)\b", re.IGNORECASE)
+KYC_TERM = re.compile(r"\b(?:kyc|pan card|pan|aadhaar|sim)\b", re.IGNORECASE)
+KYC_ACTION = re.compile(r"\b(?:update\w*|block\w*|expir\w*|suspend\w*|deactivat\w*)\b", re.IGNORECASE)
+CONTACT_ACTION = re.compile(r"\b(?:call|whatsapp|contact|dial)\b", re.IGNORECASE)
+
+
+def without_protective(text: str) -> str:
+    return PROTECTIVE_PHRASE.sub(" ", text)
+
+
+def has_call_to_action(text: str) -> bool:
+    """Scam notices push you to act now: an unofficial link, a number to call, a payment,
+    a credential request or a deadline. Genuine notices ("visit your branch") usually don't."""
+    if any(r["risk"] != "safe" for r in xray_links(text)):
+        return True
+    if CONTACT_ACTION.search(text) and re.search(r"\d{5}\s?\d{5}|\+\d{2}", text):
+        return True
+    if AUTHORITY_DEMAND.search(text) or URGENCY_WORDS.search(text):
+        return True
+    return bool(CREDENTIAL_WORD.search(text) and CREDENTIAL_ASK.search(text))
 
 DIGITAL_ARREST_AUTHORITY = re.compile(
     r"\b(?:cbi|police|customs|narcotics|ncb|enforcement directorate|\bed officer|trai|cyber\s*crime|crime branch|"
@@ -106,6 +148,9 @@ class RuleBasedFallbackProvider(BaseLLMProvider):
         self, text: str, extracted_entities: Dict[str, Any], language: str
     ) -> Dict[str, Any]:
         logger.info("Executing rule-based heuristic scam analysis engine.")
+        # Add English equivalents of Hindi / Hinglish / Tamil / Tanglish scam words so the rules see them.
+        cues = english_cues(text)
+        text = f"{text} {cues}" if cues else text
         cleaned = text.lower()
 
         indicators: List[Dict[str, Any]] = []
@@ -133,9 +178,10 @@ class RuleBasedFallbackProvider(BaseLLMProvider):
             detected_category = ScamCategory.UPI_QR_SCAM
 
         # 2. Check for OTP / PIN / CVV credential harvesting
-        if REGEX_PATTERNS["otp_pin_request"].search(cleaned) or (
-            ("otp" in cleaned or "pin" in cleaned or "password" in cleaned or "cvv" in cleaned)
-            and ("share" in cleaned or "send" in cleaned or "verify" in cleaned or "tell" in cleaned)
+        asking = without_protective(cleaned)
+        ask_verbs = STRONG_CREDENTIAL_ASK if OTP_DELIVERY.search(asking) else CREDENTIAL_ASK
+        if (not OTP_DELIVERY.search(asking) and REGEX_PATTERNS["otp_pin_request"].search(asking)) or (
+            CREDENTIAL_WORD.search(asking) and ask_verbs.search(asking)
         ):
             indicators.append({
                 "title": "Confidential Security Credential Solicitation",
@@ -219,9 +265,10 @@ class RuleBasedFallbackProvider(BaseLLMProvider):
                 detected_category = ScamCategory.INVESTMENT_CRYPTO_PONZI
 
         # 7. Check for KYC / Account Expiry Phishing
-        if REGEX_PATTERNS["kyc_block_threat"].search(cleaned) or (
-            ("kyc" in cleaned or "pan" in cleaned or "sim" in cleaned) and ("block" in cleaned or "expire" in cleaned or "update" in cleaned)
-        ):
+        if (
+            REGEX_PATTERNS["kyc_block_threat"].search(cleaned)
+            or (KYC_TERM.search(cleaned) and KYC_ACTION.search(cleaned))
+        ) and has_call_to_action(without_protective(cleaned)):
             indicators.append({
                 "title": "Deceptive KYC / Account Suspension Threat",
                 "description": "Claims your bank account, PAN card, or SIM will be permanently blocked unless you update KYC immediately via an unverified link.",
@@ -239,7 +286,7 @@ class RuleBasedFallbackProvider(BaseLLMProvider):
         # Mentioning police/customs/etc. is not a threat by itself ("police found my wallet"), so also require a threat or demand.
         if (
             REGEX_PATTERNS["threat_authority"].search(cleaned)
-            and AUTHORITY_THREAT_OR_DEMAND.search(cleaned)
+            and (AUTHORITY_THREAT.search(cleaned) or (AUTHORITY_DEMAND.search(cleaned) and URGENCY_WORDS.search(cleaned)))
             and detected_category != ScamCategory.LOTTERY_PRIZE_SCAM
         ):
             indicators.append({

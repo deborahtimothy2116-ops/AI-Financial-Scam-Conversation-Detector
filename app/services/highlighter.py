@@ -8,6 +8,8 @@ import re
 from typing import Dict, List, Pattern, Tuple
 
 from app.services.link_xray import find_links, xray_link
+from app.services.multilingual import native_matches
+from app.services.llm_service import CREDENTIAL_ASK, PROTECTIVE_PHRASE, without_protective
 from app.services.message_checks import (
     BANK_DETAILS_RE,
     COMMON_MISSPELLINGS,
@@ -66,6 +68,10 @@ PHRASE_RULES: List[Tuple[str, str, str, str, Pattern]] = [
      "Only use numbers and emails from the official website or your card, not from the message.", "low", PHONE_RE),
 ]
 
+CATEGORY_INFO = {}
+for _category, _label, _reason, _severity, _ in PHRASE_RULES:
+    CATEGORY_INFO.setdefault(_category, (_label, _reason, _severity))
+
 LINK_RISK_TO_SEVERITY = {"danger": "high", "caution": "medium", "unknown": "low"}
 
 
@@ -89,8 +95,23 @@ def find_highlights(text: str) -> List[Dict]:
             "reason": worst["detail"] if worst else "Not a known official domain; open the organisation's app or website yourself instead.",
         })
 
+    # Native-language scam words (Hindi, Hinglish, Tamil, Tanglish) use the same labels as their English rule.
+    for span in native_matches(text):
+        label, reason, severity = CATEGORY_INFO.get(span["category"], ("Warning sign", "", "low"))
+        candidates.append({**span, "severity": severity, "label": label,
+                           "reason": f"Means \"{span['meaning']}\". {reason}".strip()})
+
+    # "Do not share your OTP" is a safety warning, not a request: don't flag secret-code words
+    # inside such warnings, or anywhere if nothing in the message actually asks for them.
+    protective = [(m.start(), m.end()) for m in PROTECTIVE_PHRASE.finditer(text)]
+    asks_for_credentials = bool(CREDENTIAL_ASK.search(without_protective(text)))
+
     for category, label, reason, severity, pattern in PHRASE_RULES:
         for match in pattern.finditer(text):
+            if category == "credentials" and (
+                not asks_for_credentials or any(s <= match.start() < e for s, e in protective)
+            ):
+                continue
             if match.end() > match.start():
                 candidates.append({"start": match.start(), "end": match.end(), "category": category,
                                    "severity": severity, "label": label, "reason": reason})

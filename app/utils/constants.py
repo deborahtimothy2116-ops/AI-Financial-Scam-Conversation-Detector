@@ -168,7 +168,8 @@ REGEX_PATTERNS = {
     ),
     # Threat / Coercion / Authority
     "threat_authority": re.compile(
-        r"\b(?:cbi|police|customs|cyber\s*crime|rbi|income\s*tax|court|warrant|arrest|legal\s*action|electricity\s*bill|disconnected\s*tonight|power\s*cut)\b",
+        r"\b(?:cbi|police|customs|cyber\s*crime|rbi|income\s*tax|court|warrant|arrest|legal\s*action|electricity\s*bill|disconnected\s*tonight|power\s*cut|"
+        r"trai|telecom\s*department|department\s*of\s*telecom\w*|ncb|narcotics|enforcement\s*directorate|crime\s*branch|interpol)\b",
         re.IGNORECASE,
     ),
     # KYC / Account Block threats

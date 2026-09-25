@@ -108,7 +108,7 @@ BANK_DETAILS_RE = re.compile(
     re.IGNORECASE,
 )
 MONEY_REQUEST_RE = re.compile(
-    r"\b(?:pay|send|transfer|deposit|remit)\b.{0,30}?(?:₹|rs\.?\s?|inr\s?|\$|usd\s?)\s?\d[\d,]*"
+    r"(?<!fixed )\b(?:pay|send|transfer|deposit|remit)\b(?!\s+(?:of|has|was|is|made|received)\b).{0,30}?(?:₹|rs\.?\s?|inr\s?|\$|usd\s?)\s?\d[\d,]*"
     r"|(?:₹|rs\.?\s?|inr\s?|\$)\s?\d[\d,]*.{0,25}?\b(?:fee|charge|charges|deposit|advance|penalty|fine)\b",
     re.IGNORECASE,
 )
