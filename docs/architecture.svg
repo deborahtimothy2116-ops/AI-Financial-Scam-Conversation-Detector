@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1130" viewBox="0 0 1600 1130">
+<defs><marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6b7887"/></marker></defs>
+<rect width="1600" height="1130" fill="#ffffff"/>
+<text x="60" y="52" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="26" font-weight="bold" fill="#1b2530" text-anchor="start">ScamShield: System Architecture</text>
+<text x="60" y="76" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" fill="#566273" text-anchor="start">AI financial scam detector · FastAPI backend · installable web app</text>
+<rect x="60" y="100" width="1180" height="150" rx="12" fill="#eef3fa" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="78" y="128" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="17" font-weight="bold" fill="#1b2530" text-anchor="start">Client layer</text>
+<text x="1222" y="128" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="end">frontend/  ·  browser or installed Android app</text>
+<rect x="80" y="140" width="520" height="94" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="340.0" y="168.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#1b2530" text-anchor="middle">Web app (HTML + JavaScript + Tailwind CSS)</text>
+<text x="340.0" y="186.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">Scan a message · Result page · Pause-before-you-pay modal</text>
+<text x="340.0" y="202.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">Check a call · Verify a payment · Check number / UPI</text>
+<text x="340.0" y="218.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">Incident response · Scan history · Awareness training</text>
+<rect x="620" y="140" width="290" height="94" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="765.0" y="176.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#1b2530" text-anchor="middle">Installable app (PWA)</text>
+<text x="765.0" y="194.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">manifest.webmanifest + icons</text>
+<text x="765.0" y="210.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">appears in Android Share menu</text>
+<rect x="930" y="140" width="290" height="94" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="1075.0" y="176.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#1b2530" text-anchor="middle">Service worker (sw.js)</text>
+<text x="1075.0" y="194.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">receives shared text &amp; screenshots</text>
+<text x="1075.0" y="210.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">from WhatsApp / SMS / Gallery</text>
+<rect x="60" y="300" width="1180" height="130" rx="12" fill="#f1f1fb" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="78" y="328" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="17" font-weight="bold" fill="#1b2530" text-anchor="start">API layer — FastAPI  /api/v1</text>
+<text x="1222" y="328" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="end">app/api/  ·  JWT auth  ·  JSON</text>
+<rect x="80" y="344" width="130" height="66" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="145.0" y="374.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#1b2530" text-anchor="middle">analysis</text>
+<text x="145.0" y="392.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">scan text / image</text>
+<rect x="221" y="344" width="130" height="66" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="286.0" y="374.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#1b2530" text-anchor="middle">history</text>
+<text x="286.0" y="392.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">past scans</text>
+<rect x="362" y="344" width="130" height="66" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="427.0" y="374.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#1b2530" text-anchor="middle">community</text>
+<text x="427.0" y="392.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">lookup / report</text>
+<rect x="503" y="344" width="130" height="66" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="568.0" y="374.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#1b2530" text-anchor="middle">emergency</text>
+<text x="568.0" y="392.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">steps / complaint</text>
+<rect x="644" y="344" width="130" height="66" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="709.0" y="374.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#1b2530" text-anchor="middle">tools</text>
+<text x="709.0" y="392.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">call · payment</text>
+<rect x="785" y="344" width="130" height="66" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="850.0" y="374.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#1b2530" text-anchor="middle">pause</text>
+<text x="850.0" y="392.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">events / stats</text>
+<rect x="926" y="344" width="130" height="66" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="991.0" y="374.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#1b2530" text-anchor="middle">quiz</text>
+<text x="991.0" y="392.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">training</text>
+<rect x="1067" y="344" width="130" height="66" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="1132.0" y="374.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#1b2530" text-anchor="middle">auth · health</text>
+<text x="1132.0" y="392.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">login · status</text>
+<rect x="60" y="480" width="1180" height="330" rx="12" fill="#edf6f2" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="78" y="508" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="17" font-weight="bold" fill="#1b2530" text-anchor="start">Service layer</text>
+<text x="1222" y="508" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="end">app/services/</text>
+<text x="80" y="530" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#0a5dc2" text-anchor="start">Scan pipeline (scam_detector)</text>
+<rect x="80" y="545" width="104" height="84" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="132.0" y="576.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">OCR</text>
+<text x="132.0" y="594.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">screenshot</text>
+<text x="132.0" y="610.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">to text</text>
+<line x1="185" y1="587" x2="203" y2="587" stroke="#6b7887" stroke-width="2" marker-end="url(#arr)"/>
+<rect x="204" y="545" width="104" height="84" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="256.0" y="576.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">Preprocess</text>
+<text x="256.0" y="594.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">clean, extract</text>
+<text x="256.0" y="610.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">UPI · links · nos.</text>
+<line x1="309" y1="587" x2="327" y2="587" stroke="#6b7887" stroke-width="2" marker-end="url(#arr)"/>
+<rect x="328" y="545" width="104" height="84" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="380.0" y="576.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">Language</text>
+<text x="380.0" y="594.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">EN · HI · TA</text>
+<text x="380.0" y="610.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">+ multilingual</text>
+<line x1="433" y1="587" x2="451" y2="587" stroke="#6b7887" stroke-width="2" marker-end="url(#arr)"/>
+<rect x="452" y="545" width="104" height="84" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="504.0" y="576.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">Detection</text>
+<text x="504.0" y="594.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">rules + checks</text>
+<text x="504.0" y="610.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">+ link X-ray</text>
+<line x1="557" y1="587" x2="575" y2="587" stroke="#6b7887" stroke-width="2" marker-end="url(#arr)"/>
+<rect x="576" y="545" width="104" height="84" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="628.0" y="576.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">Risk engine</text>
+<text x="628.0" y="594.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">0–100 score</text>
+<text x="628.0" y="610.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">→ verdict</text>
+<line x1="681" y1="587" x2="699" y2="587" stroke="#6b7887" stroke-width="2" marker-end="url(#arr)"/>
+<rect x="700" y="545" width="104" height="84" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="752.0" y="576.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">Explain</text>
+<text x="752.0" y="594.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">reasons +</text>
+<text x="752.0" y="610.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">what to do</text>
+<text x="80" y="668" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#0a5dc2" text-anchor="start">Result enrichers (attached to every result)</text>
+<rect x="80" y="682" width="163" height="66" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="161.5" y="712.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">Highlighter</text>
+<text x="161.5" y="730.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">risky phrases</text>
+<rect x="256" y="682" width="163" height="66" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="337.5" y="712.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">Link X-ray</text>
+<text x="337.5" y="730.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">real destination</text>
+<rect x="432" y="682" width="163" height="66" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="513.5" y="712.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">Claim verification</text>
+<text x="513.5" y="730.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">official checks</text>
+<rect x="608" y="682" width="163" height="66" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="689.5" y="712.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">Pause check</text>
+<text x="689.5" y="730.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">SCAM checklist</text>
+<line x1="628.0" y1="630" x2="628.0" y2="652" stroke="#6b7887" stroke-width="2" marker-end="url(#arr)"/>
+<text x="80" y="780" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="start">Community reports feed the scan: 1–2 reports → at least SUSPICIOUS, 3+ → SCAM</text>
+<text x="860" y="530" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#0a5dc2" text-anchor="start">Tools</text>
+<rect x="860" y="545" width="360" height="54" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="1040.0" y="569.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">call_check</text>
+<text x="1040.0" y="587.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">live call verdict from yes/no answers</text>
+<rect x="860" y="607" width="360" height="54" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="1040.0" y="631.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">payment_proof</text>
+<text x="1040.0" y="649.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">fake / pending payment screenshots</text>
+<rect x="860" y="669" width="360" height="54" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="1040.0" y="693.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">community_service</text>
+<text x="1040.0" y="711.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">normalise &amp; count scam reports</text>
+<rect x="860" y="731" width="360" height="54" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="1040.0" y="755.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">emergency_service</text>
+<text x="1040.0" y="773.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">first-hour steps &amp; complaint draft</text>
+<rect x="60" y="860" width="1180" height="150" rx="12" fill="#f8f2e8" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="78" y="888" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="17" font-weight="bold" fill="#1b2530" text-anchor="start">Data layer — SQLAlchemy ORM</text>
+<text x="1222" y="888" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="end">SQLite (local) / PostgreSQL (Docker)  ·  Alembic migrations 001–003</text>
+<rect x="80" y="904" width="150" height="72" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="155.0" y="937.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">users</text>
+<text x="155.0" y="955.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">accounts</text>
+<rect x="242" y="904" width="150" height="72" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="317.0" y="937.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">analyses</text>
+<text x="317.0" y="955.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">scans &amp; verdicts</text>
+<rect x="404" y="904" width="150" height="72" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="479.0" y="937.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">indicators</text>
+<text x="479.0" y="955.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">findings</text>
+<rect x="566" y="904" width="150" height="72" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="641.0" y="937.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">recommendations</text>
+<text x="641.0" y="955.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">actions</text>
+<rect x="728" y="904" width="150" height="72" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="803.0" y="937.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">feedback</text>
+<text x="803.0" y="955.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">accuracy</text>
+<rect x="890" y="904" width="150" height="72" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="965.0" y="937.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">scam_reports</text>
+<text x="965.0" y="955.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">community</text>
+<rect x="1052" y="904" width="150" height="72" rx="8" fill="#ffffff" stroke="#c3cedb" stroke-width="1.4"/>
+<text x="1127.0" y="937.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#1b2530" text-anchor="middle">pause_events</text>
+<text x="1127.0" y="955.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">pause choices</text>
+<line x1="650" y1="250" x2="650" y2="298" stroke="#6b7887" stroke-width="2" marker-end="url(#arr)"/>
+<text x="662" y="279" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="start">HTTPS · JSON requests</text>
+<line x1="650" y1="430" x2="650" y2="478" stroke="#6b7887" stroke-width="2" marker-end="url(#arr)"/>
+<text x="662" y="459" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="start">function calls</text>
+<line x1="650" y1="810" x2="650" y2="858" stroke="#6b7887" stroke-width="2" marker-end="url(#arr)"/>
+<text x="662" y="839" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="start">read / write</text>
+<text x="1290" y="118" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#566273" text-anchor="start">External</text>
+<rect x="1290" y="130" width="260" height="120" rx="8" fill="#fafbfc" stroke="#8a95a3" stroke-width="1.4" stroke-dasharray="6 5"/>
+<text x="1420.0" y="171.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#1b2530" text-anchor="middle">Official channels</text>
+<text x="1420.0" y="189.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">1930 helpline</text>
+<text x="1420.0" y="205.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">cybercrime.gov.in · Sanchar Saathi</text>
+<text x="1420.0" y="221.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">bank &amp; official apps / websites</text>
+<line x1="1240" y1="190" x2="1288" y2="190" stroke="#6b7887" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arr)"/>
+<rect x="1290" y="490" width="260" height="90" rx="8" fill="#fafbfc" stroke="#8a95a3" stroke-width="1.4" stroke-dasharray="6 5"/>
+<text x="1420.0" y="524.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#1b2530" text-anchor="middle">OCR engines</text>
+<text x="1420.0" y="542.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">Windows OCR (winocr)</text>
+<text x="1420.0" y="558.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">Tesseract (English + Tamil)</text>
+<line x1="1240" y1="535" x2="1288" y2="535" stroke="#6b7887" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arr)"/>
+<rect x="1290" y="610" width="260" height="110" rx="8" fill="#fafbfc" stroke="#8a95a3" stroke-width="1.4" stroke-dasharray="6 5"/>
+<text x="1420.0" y="646.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#1b2530" text-anchor="middle">AI providers (optional)</text>
+<text x="1420.0" y="664.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">Gemini · OpenAI · Claude · Groq</text>
+<text x="1420.0" y="680.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">second opinion; falls back</text>
+<text x="1420.0" y="696.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">to rules if unavailable</text>
+<line x1="1240" y1="665" x2="1288" y2="665" stroke="#6b7887" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arr)"/>
+<rect x="1290" y="880" width="260" height="110" rx="8" fill="#fafbfc" stroke="#8a95a3" stroke-width="1.4" stroke-dasharray="6 5"/>
+<text x="1420.0" y="916.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#1b2530" text-anchor="middle">GitHub Actions CI</text>
+<text x="1420.0" y="934.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">163 automated tests</text>
+<text x="1420.0" y="950.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">accuracy benchmark</text>
+<text x="1420.0" y="966.0" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="middle">run on every push</text>
+<line x1="60" y1="1060" x2="110" y2="1060" stroke="#6b7887" stroke-width="2" marker-end="url(#arr)"/>
+<text x="120" y="1064" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="start">request / data flow</text>
+<line x1="290" y1="1060" x2="340" y2="1060" stroke="#6b7887" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arr)"/>
+<text x="350" y="1064" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="start">external or optional</text>
+<text x="1550" y="1064" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" fill="#566273" text-anchor="end">Privacy: links are never opened · screenshots processed in memory · history private per account</text>
+</svg>
