@@ -1,52 +1,46 @@
 /** Tailwind build config. Rebuild CSS with: npx tailwindcss@3 -c frontend/tailwind.config.js -i frontend/tailwind.input.css -o frontend/tailwind.css --minify */
+// Enterprise palette: neutral greys, one business-blue accent, and status colours used only for status.
 module.exports = {
   content: [__dirname + "/index.html", __dirname + "/app.js"],
-  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        "surface": "#faf8ff",
-        "surface-dim": "#d2d9f4",
-        "surface-bright": "#faf8ff",
-        "surface-container-lowest": "#ffffff",
-        "surface-container-low": "#f2f3ff",
-        "surface-container": "#eaedff",
-        "surface-container-high": "#e2e7ff",
-        "surface-container-highest": "#dae2fd",
-        "on-surface": "#131b2e",
-        "on-surface-variant": "#434655",
-        "outline": "#747686",
-        "outline-variant": "#c4c5d7",
-        "primary": "#0037b0",
-        "primary-container": "#1d4ed8",
+        "surface": "#f4f6f8",                  // page background
+        "surface-container-lowest": "#ffffff", // panels
+        "surface-container-low": "#f7f8fa",
+        "surface-container": "#eef1f4",
+        "surface-container-high": "#e3e8ee",
+        "surface-container-highest": "#d9e0e8",
+        "on-surface": "#1d2733",
+        "on-surface-variant": "#556170",
+        "outline": "#8a95a3",
+        "outline-variant": "#d5dbe3",
+        "shell": "#1d2d3e",                    // top shell bar
+        "shell-muted": "#9aa7b6",
+        "primary": "#0a5dc2",
+        "primary-container": "#084c9e",        // hover / pressed
         "on-primary": "#ffffff",
-        "on-primary-container": "#cad3ff",
-        "primary-fixed": "#dce1ff",
-        "primary-fixed-dim": "#b7c4ff",
-        "secondary": "#4b41e1",
-        "secondary-container": "#645efb",
-        "on-secondary": "#ffffff",
-        "secondary-fixed": "#e2dfff",
-        "tertiary": "#004f35",
-        "tertiary-container": "#006948",
+        "primary-fixed": "#e6f0fb",            // selected / tint
+        "primary-fixed-dim": "#b9d3f2",
+        "tertiary": "#107e3e",                 // positive
+        "tertiary-container": "#e8f4ec",
         "on-tertiary": "#ffffff",
-        "tertiary-fixed": "#85f8c4",
-        "tertiary-fixed-dim": "#68dba9",
-        "on-tertiary-fixed": "#002114",
-        "on-tertiary-container": "#7ff2bd",
-        "error": "#ba1a1a",
-        "error-container": "#ffdad6",
+        "on-tertiary-container": "#0b5a2c",
+        "tertiary-fixed": "#cfe9d8",
+        "on-tertiary-fixed": "#0b5a2c",
+        "error": "#bb0000",                    // negative
+        "error-container": "#fdecec",
         "on-error": "#ffffff",
-        "on-error-container": "#93000a",
-        "inverse-surface": "#283044",
-        "inverse-on-surface": "#eef0ff",
+        "on-error-container": "#8a0000",
+        "inverse-surface": "#1d2d3e",
+        "inverse-on-surface": "#f4f6f8",
       },
       fontFamily: {
-        display: ["Plus Jakarta Sans", "sans-serif"],
-        headline: ["Plus Jakarta Sans", "sans-serif"],
-        body: ["Inter", "sans-serif"],
-        code: ["Inter", "monospace"],
-      }
-    }
-  }
+        display: ["Inter", "system-ui", "sans-serif"],
+        headline: ["Inter", "system-ui", "sans-serif"],
+        body: ["Inter", "system-ui", "sans-serif"],
+        code: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
+      },
+    },
+  },
 };

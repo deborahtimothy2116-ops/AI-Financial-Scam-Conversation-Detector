@@ -1,3 +1,54 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Enterprise building blocks shared by every page. */
+@layer components {
+  .page { @apply max-w-6xl mx-auto px-4 sm:px-6 py-6 w-full; }
+  .page-header { @apply flex flex-wrap items-end justify-between gap-3 pb-4 mb-6 border-b border-outline-variant; }
+  .eyebrow { @apply text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant; }
+  .page-title { @apply text-xl font-semibold text-on-surface; }
+  .page-desc { @apply text-sm text-on-surface-variant mt-1; }
+
+  .panel { @apply bg-surface-container-lowest border border-outline-variant rounded-lg; }
+  .panel-head { @apply flex items-center justify-between gap-2 px-5 py-3 border-b border-outline-variant; }
+  .panel-title { @apply text-sm font-semibold text-on-surface; }
+
+  .btn-primary { @apply h-9 px-4 rounded-md bg-primary text-on-primary hover:bg-primary-container text-sm font-semibold inline-flex items-center justify-center gap-1.5 transition-colors; }
+  .btn-secondary { @apply h-9 px-3.5 rounded-md bg-surface-container-lowest text-primary border border-outline-variant hover:bg-surface-container-low text-sm font-semibold inline-flex items-center justify-center gap-1.5 transition-colors; }
+  .btn-danger { @apply h-9 px-3.5 rounded-md bg-error text-on-error hover:bg-red-800 text-sm font-semibold inline-flex items-center justify-center gap-1.5 transition-colors; }
+  .btn-ghost { @apply h-8 px-2.5 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface text-xs font-semibold inline-flex items-center gap-1; }
+  .link-btn { @apply text-primary font-medium hover:underline; }
+
+  .tab { @apply -mb-px px-3 py-3 mr-2 text-sm font-medium text-on-surface-variant border-b-2 border-transparent hover:text-on-surface inline-flex items-center gap-1.5; }
+  .tab-active { @apply text-primary border-primary; }
+
+  .field-label { @apply block text-xs font-semibold text-on-surface-variant mb-1.5; }
+  .field { @apply w-full px-3 py-2 rounded-md bg-surface-container-lowest border border-outline-variant text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15; }
+
+  .tag { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wide border; }
+  .tag-negative { @apply bg-error-container text-on-error-container border-red-200; }
+  .tag-critical { @apply bg-amber-50 text-amber-800 border-amber-200; }
+  .tag-positive { @apply bg-tertiary-container text-on-tertiary-container border-green-200; }
+  .tag-info { @apply bg-primary-fixed text-primary border-primary-fixed-dim; }
+  .tag-neutral { @apply bg-surface-container text-on-surface-variant border-outline-variant; }
+
+  .kpi { @apply px-5 py-4; }
+  .kpi-label { @apply text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant; }
+  .kpi-value { @apply text-2xl font-semibold text-on-surface mt-1; }
+
+  .data-table { @apply w-full text-sm; }
+  .data-table th { @apply text-left text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant bg-surface-container-low px-5 py-2.5 border-b border-outline-variant; }
+  .data-table td { @apply px-5 py-3 border-b border-outline-variant align-top; }
+  .data-table tr:last-child td { @apply border-b-0; }
+
+  .side-link { @apply flex items-center gap-2.5 mx-2 px-3 py-2 rounded-md text-sm text-on-surface hover:bg-surface-container border-l-[3px] border-transparent; }
+  .side-link .material-symbols-outlined { @apply text-[20px] text-on-surface-variant; }
+  .side-link-active { @apply bg-primary-fixed text-primary font-semibold border-primary; }
+  .side-link-active .material-symbols-outlined { @apply text-primary; }
+}
+
+@layer components {
+  .seg { @apply px-3 py-1.5 bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low; }
+  .seg-active { @apply bg-primary-fixed text-primary; }
+}

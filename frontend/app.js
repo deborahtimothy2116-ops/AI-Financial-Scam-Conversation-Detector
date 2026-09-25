@@ -42,20 +42,20 @@ document.addEventListener("DOMContentLoaded", () => {
 // ---------------------------------------------------------------------------
 const VIEWS = ["scan", "processing", "result", "history", "community", "quiz", "emergency"];
 // Views that belong to a nav tab (processing/result count as "scan")
-const NAV_FOR_VIEW = { scan: "scan", processing: "scan", result: "scan", history: "history", community: "community", quiz: "quiz" };
+const NAV_FOR_VIEW = { scan: "scan", processing: "scan", result: "scan", history: "history", community: "community", quiz: "quiz", emergency: "emergency" };
 
 function highlightNav(viewName) {
   const active = NAV_FOR_VIEW[viewName];
-  ["scan", "community", "quiz", "history"].forEach((tab) => {
+  ["scan", "community", "emergency", "history", "quiz"].forEach((tab) => {
     const on = tab === active;
-    const desktop = document.getElementById(`nav-${tab}`);
-    if (desktop) {
-      desktop.classList.toggle("bg-surface-container-lowest", on);
-      desktop.classList.toggle("text-primary", on);
-      desktop.classList.toggle("shadow-sm", on);
-    }
+    const side = document.getElementById(`nav-${tab}`);
+    if (side) side.classList.toggle("side-link-active", on);
     const phone = document.getElementById(`mnav-${tab}`);
-    if (phone) phone.classList.toggle("text-primary", on);
+    if (phone) {
+      phone.classList.toggle("text-primary", on);
+      phone.classList.toggle("border-primary", on);
+      phone.classList.toggle("border-transparent", !on);
+    }
   });
 }
 
@@ -187,7 +187,7 @@ function updateAuthUI() {
       }
     };
   } else {
-    authBtnLabel.textContent = "Login";
+    authBtnLabel.textContent = "Sign in";
     authBtn.onclick = () => openAuthModal("login");
   }
 }
@@ -212,12 +212,9 @@ function logout() {
 // ---------------------------------------------------------------------------
 function setScanMode(mode) {
   state.scanMode = mode;
-  const on = ["bg-surface-container-lowest", "text-primary", "shadow-sm"];
-  const off = ["text-on-surface-variant"];
-  const tabs = { text: document.getElementById("tab-text"), image: document.getElementById("tab-image") };
-  Object.entries(tabs).forEach(([key, el]) => {
-    on.forEach((c) => el.classList.toggle(c, key === mode));
-    off.forEach((c) => el.classList.toggle(c, key !== mode));
+  ["text", "image"].forEach((key) => {
+    const el = document.getElementById(`tab-${key}`);
+    el.classList.toggle("tab-active", key === mode);
     el.setAttribute("aria-selected", key === mode ? "true" : "false");
   });
   document.getElementById("scan-text-panel").classList.toggle("hidden", mode !== "text");
@@ -300,19 +297,22 @@ function renderScannerChecks(done, total, labels) {
   document.getElementById("scanner-checks").innerHTML = labels
     .map((label, i) => {
       const icon = i < done ? "check_circle" : i === done ? "progress_activity" : "radio_button_unchecked";
-      const color = i < done ? "text-emerald-400" : i === done ? "text-sky-300" : "text-slate-500";
-      return `<div class="flex items-center gap-2 ${color}"><span class="material-symbols-outlined text-[16px] ${i === done ? "animate-spin" : ""}">${icon}</span>${escapeHtml(label)}</div>`;
+      const color = i < done ? "text-tertiary" : i === done ? "text-primary" : "text-outline";
+      const text = i <= done ? "text-on-surface" : "text-on-surface-variant";
+      return `<li class="flex items-start gap-2 ${text}"><span class="material-symbols-outlined text-[18px] ${color} ${i === done ? "animate-spin" : ""}">${icon}</span>${escapeHtml(label)}</li>`;
     })
     .join("");
-  document.getElementById("scanner-percent").textContent = `${Math.round((done / total) * 100)}%`;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById("scanner-percent").textContent = `${pct}%`;
+  document.getElementById("scanner-progress").style.width = `${pct}%`;
 }
 
 function startScannerAnimation(mode, text) {
   const labels = SCAN_CHECKS[mode];
   const doc = document.getElementById("scanner-doc");
   const img = document.getElementById("scanner-image");
-  document.getElementById("scanner-mode").textContent = mode === "image" ? "SCANNING SCREENSHOT" : "SCANNING MESSAGE";
-  document.getElementById("scanner-dot").className = "w-2 h-2 rounded-full bg-sky-400 animate-pulse";
+  document.getElementById("scanner-mode").textContent = mode === "image" ? "Scanning screenshot" : "Scanning message";
+  document.getElementById("scanner-dot").className = "w-2 h-2 rounded-full bg-primary animate-pulse";
   document.getElementById("scanner-beam").classList.remove("done");
   document.getElementById("scanner-result-line").textContent = "";
   doc.classList.remove("scan-reveal");
@@ -361,9 +361,9 @@ async function finishScannerAnimation(scan, analysis) {
 
   const verdict = analysis.verdict || "SAFE";
   const flags = (analysis.indicators || []).length;
-  const dot = { SCAM: "bg-red-500", SUSPICIOUS: "bg-amber-400", SAFE: "bg-emerald-400" }[verdict];
+  const dot = { SCAM: "bg-error", SUSPICIOUS: "bg-amber-500", SAFE: "bg-tertiary" }[verdict];
   document.getElementById("scanner-dot").className = `w-2 h-2 rounded-full ${dot}`;
-  document.getElementById("scanner-mode").textContent = "SCAN COMPLETE";
+  document.getElementById("scanner-mode").textContent = "Scan complete";
   document.getElementById("scanner-result-line").textContent =
     flags ? `Found ${flags} warning sign${flags === 1 ? "" : "s"}` : "No warning signs found";
 
@@ -417,11 +417,26 @@ async function startScan() {
 // Result
 // ---------------------------------------------------------------------------
 const VERDICT_STYLES = {
-  SCAM: { banner: "bg-error text-on-error", pill: "bg-on-error text-error", icon: "dangerous", why: "Why this looks like a scam" },
-  SUSPICIOUS: { banner: "bg-amber-400 text-amber-950", pill: "bg-amber-950 text-amber-50", icon: "gpp_maybe", why: "Why you should be careful" },
-  SAFE: { banner: "bg-tertiary text-on-tertiary", pill: "bg-on-tertiary text-tertiary", icon: "verified_user", why: "What we checked" },
+  SCAM: { tag: "tag tag-negative", border: "border-l-error", bar: "bg-error", word: "Scam", text: "text-error" },
+  SUSPICIOUS: { tag: "tag tag-critical", border: "border-l-amber-500", bar: "bg-amber-500", word: "Suspicious", text: "text-amber-700" },
+  SAFE: { tag: "tag tag-positive", border: "border-l-tertiary", bar: "bg-tertiary", word: "Safe", text: "text-tertiary" },
 };
-const SEVERITY_DOT = { CRITICAL: "bg-red-600", HIGH: "bg-red-500", MEDIUM: "bg-amber-500", LOW: "bg-sky-500" };
+const SEVERITY_TAGS = {
+  CRITICAL: ["tag tag-negative", "Critical"],
+  HIGH: ["tag tag-negative", "High"],
+  MEDIUM: ["tag tag-critical", "Medium"],
+  LOW: ["tag tag-info", "Low"],
+};
+
+// Business UI: drop decorative emoji the recommendation texts start with.
+function plainText(text) {
+  return String(text || "").replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, "").replace(/\s{2,}/g, " ").trim();
+}
+
+function formatDateTime(value) {
+  const d = value ? new Date(value) : new Date();
+  return d.toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
 
 function renderResultView(analysis) {
   if (!analysis) return;
@@ -429,63 +444,79 @@ function renderResultView(analysis) {
   const score = Math.round(analysis.risk ? analysis.risk.score : analysis.risk_score || 0);
   const verdict = analysis.verdict || (score >= 60 ? "SCAM" : score >= 30 ? "SUSPICIOUS" : "SAFE");
   const style = VERDICT_STYLES[verdict];
+  const indicators = analysis.indicators || [];
+  const links = analysis.link_xray || [];
+  const isScreenshot = analysis.input_type === "screenshot";
 
-  // Verdict banner
-  document.getElementById("result-banner").className = `rounded-2xl p-6 shadow-lg mb-5 flex items-start gap-4 ${style.banner}`;
-  document.getElementById("result-banner-icon").textContent = style.icon;
-  document.getElementById("result-verdict-text").textContent = verdict;
-  const pill = document.getElementById("result-score-pill");
-  pill.className = `px-2.5 py-0.5 rounded-full text-xs font-bold ${style.pill}`;
-  pill.textContent = `Risk ${score} / 100`;
+  // Header
+  document.getElementById("result-header").className = `panel border-l-4 mb-6 ${style.border}`;
+  document.getElementById("result-meta").textContent = `Scan result · ${isScreenshot ? "Screenshot" : "Pasted text"} · ${formatDateTime(analysis.created_at)}`;
+  document.getElementById("result-title").textContent =
+    verdict === "SAFE" ? "No warning signs found" : analysis.category_title || "Suspicious message";
+  const tag = document.getElementById("result-verdict-tag");
+  tag.className = style.tag;
+  tag.textContent = style.word;
   document.getElementById("result-verdict-label").textContent = (analysis.verdict_label || "").replace(/^\w+ – /, "");
-  const category = analysis.category_title || "";
-  document.getElementById("result-category").textContent =
-    verdict === "SAFE" || !category ? "" : `Looks like: ${category}`;
+
+  // KPIs
+  const kpiVerdict = document.getElementById("kpi-verdict");
+  kpiVerdict.textContent = style.word;
+  kpiVerdict.className = `kpi-value ${style.text}`;
+  document.getElementById("kpi-score").textContent = score;
+  const bar = document.getElementById("kpi-score-bar");
+  bar.className = `h-full rounded ${style.bar}`;
+  bar.style.width = `${score}%`;
+  document.getElementById("kpi-flags").textContent = indicators.length;
+  const dangerous = links.filter((l) => l.risk === "danger").length;
+  document.getElementById("kpi-links").innerHTML =
+    `${links.length}${dangerous ? ` <span class="text-sm font-medium text-error">(${dangerous} dangerous)</span>` : ""}`;
 
   // Message with highlights
   const rawText = analysis.raw_text || analysis.cleaned_text || "";
   const highlights = analysis.highlights || [];
   document.getElementById("result-raw-text-quote").innerHTML = renderHighlightedText(rawText, highlights);
   document.getElementById("result-highlight-legend").classList.toggle("hidden", highlights.length === 0);
-  document.getElementById("result-input-source-badge").textContent =
-    analysis.input_type === "screenshot" ? "Read from screenshot" : "Pasted text";
+  document.getElementById("result-input-source-badge").textContent = isScreenshot ? "Read from screenshot" : "Pasted text";
 
-  // Why: one clear list of red flags
-  document.getElementById("result-why-title").textContent = style.why;
-  const indicators = analysis.indicators || [];
+  // Findings table
+  document.getElementById("result-findings-count").textContent = indicators.length ? `${indicators.length} found` : "";
   document.getElementById("result-red-flags").innerHTML = indicators.length
     ? indicators
-        .map((ind) => `
-          <li class="flex items-start gap-3">
-            <span class="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0 ${SEVERITY_DOT[String(ind.severity).toUpperCase()] || "bg-sky-500"}"></span>
-            <span class="min-w-0">
-              <span class="block text-sm font-bold text-on-surface">${escapeHtml(ind.title || "")}</span>
-              <span class="block text-xs text-on-surface-variant leading-relaxed mt-0.5">${escapeHtml(ind.description || "")}</span>
-            </span>
-          </li>`)
+        .map((ind) => {
+          const [cls, word] = SEVERITY_TAGS[String(ind.severity).toUpperCase()] || SEVERITY_TAGS.LOW;
+          return `
+          <tr>
+            <td><span class="${cls}">${word}</span></td>
+            <td>
+              <div class="font-semibold text-on-surface">${escapeHtml(ind.title || "")}</div>
+              <div class="text-xs text-on-surface-variant leading-relaxed mt-0.5">${escapeHtml(ind.description || "")}</div>
+            </td>
+          </tr>`;
+        })
         .join("")
-    : `<li class="flex items-start gap-3 text-sm text-on-surface-variant">
-         <span class="material-symbols-outlined text-tertiary text-[20px]">check_circle</span>
-         <span>No requests for money, OTPs or passwords, no suspicious links, no pressure or threats. It still pays to be careful with messages from people you don't know.</span>
-       </li>`;
+    : `<tr><td colspan="2" class="text-on-surface-variant">
+         <span class="inline-flex items-center gap-2"><span class="material-symbols-outlined text-tertiary text-[18px]">check_circle</span>
+         No requests for money, OTPs or passwords, no suspicious links, and no pressure or threats were found.</span>
+       </td></tr>`;
 
-  // Link X-ray
-  renderLinkXray(analysis.link_xray || []);
+  // Link analysis
+  renderLinkXray(links);
 
-  // What to do
-  const recs = analysis.recommendations || [];
-  document.getElementById("result-recommendations-list").innerHTML = recs
-    .map((rec, i) => {
-      const text = typeof rec === "string" ? rec : rec.text;
-      return `
-        <li class="flex items-start gap-3">
-          <span class="w-6 h-6 rounded-full bg-surface-container text-primary text-xs font-bold flex items-center justify-center shrink-0">${i + 1}</span>
-          <span class="text-on-surface leading-snug pt-0.5">${escapeHtml(text)}</span>
-        </li>`;
-    })
+  // Recommended actions
+  document.getElementById("result-recommendations-list").innerHTML = (analysis.recommendations || [])
+    .map((rec, i) => `
+      <li class="flex items-start gap-3">
+        <span class="w-5 h-5 rounded-full bg-surface-container text-on-surface-variant text-[11px] font-semibold flex items-center justify-center shrink-0 mt-0.5">${i + 1}</span>
+        <span class="text-on-surface leading-snug">${escapeHtml(plainText(typeof rec === "string" ? rec : rec.text))}</span>
+      </li>`)
     .join("");
 
-  // Actions that only make sense for risky messages
+  // Classification
+  document.getElementById("result-category").textContent = verdict === "SAFE" ? "Not a scam pattern" : analysis.category_title || "-";
+  const lang = analysis.detected_language || (analysis.language && analysis.language.code) || "en";
+  document.getElementById("result-language").textContent = lang === "ta" ? "Tamil" : lang === "en" ? "English" : lang;
+  document.getElementById("result-source").textContent = isScreenshot ? "Screenshot (text recognition)" : "Pasted text";
+
   ["btn-warn-family", "btn-report-community", "btn-emergency-from-result"].forEach((id) =>
     document.getElementById(id).classList.toggle("hidden", verdict === "SAFE")
   );
@@ -503,16 +534,18 @@ async function loadHistoryData() {
     emptyState.classList.add("hidden");
     document.getElementById("count-filter-all").textContent = 0;
     container.innerHTML = `
-      <div class="p-8 rounded-xl bg-surface-container-lowest border border-surface-container text-center flex flex-col items-center gap-3">
-        <span class="material-symbols-outlined text-[36px] text-primary">lock</span>
-        <p class="text-sm font-bold text-on-surface">Sign in to save and review your scans</p>
-        <p class="text-xs text-on-surface-variant max-w-md">Guest scans are analysed instantly but not stored. Create a free account to keep a private history of every message and screenshot you check.</p>
-        <button onclick="openAuthModal('login')" class="mt-1 px-4 py-2 rounded-full bg-primary text-on-primary font-bold text-xs">Login / Register</button>
-      </div>`;
+      <tr><td colspan="5" class="py-12">
+        <div class="flex flex-col items-center text-center gap-2">
+          <span class="material-symbols-outlined text-[36px] text-outline">lock</span>
+          <p class="text-sm font-semibold text-on-surface">Sign in to keep a scan history</p>
+          <p class="text-xs text-on-surface-variant max-w-md">Scans without an account are checked but not stored.</p>
+          <button onclick="openAuthModal('login')" class="btn-primary mt-2">Sign in or register</button>
+        </div>
+      </td></tr>`;
     return;
   }
 
-  container.innerHTML = `<div class="p-8 text-center text-xs text-on-surface-variant flex items-center justify-center gap-2"><span class="material-symbols-outlined animate-spin text-primary">progress_activity</span> Loading scan records...</div>`;
+  container.innerHTML = `<tr><td colspan="5" class="text-center text-xs text-on-surface-variant py-8">Loading scans...</td></tr>`;
 
   try {
     const headers = {};
@@ -539,7 +572,7 @@ async function loadHistoryData() {
     document.getElementById("count-filter-all").textContent = state.historyMeta.total || state.historyItems.length;
     renderHistoryCards(state.historyItems);
   } catch (err) {
-    container.innerHTML = `<div class="p-6 rounded-xl bg-error-container text-on-error-container text-xs font-semibold">Error loading scan history: ${escapeHtml(err.message)}</div>`;
+    container.innerHTML = `<tr><td colspan="5" class="text-xs text-error font-semibold py-6">Could not load scan history: ${escapeHtml(err.message)}</td></tr>`;
   }
 }
 
@@ -552,52 +585,29 @@ function renderHistoryCards(items) {
     emptyState.classList.remove("hidden");
     return;
   }
-
   emptyState.classList.add("hidden");
-  container.innerHTML = "";
 
-  items.forEach((item) => {
-    const isHigh = item.risk_level === "CRITICAL" || item.risk_level === "HIGH" || item.risk_score >= 60;
-    const isMed = item.risk_level === "MEDIUM" || (item.risk_score >= 30 && item.risk_score < 60);
-
-    const card = document.createElement("div");
-    card.className = "p-4 rounded-xl bg-surface-container-lowest border border-surface-container shadow-sm hover:shadow transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4";
-
-    const badgeColor = isHigh
-      ? "bg-error-container text-on-error-container"
-      : isMed
-      ? "bg-amber-100 text-amber-900"
-      : "bg-emerald-100 text-emerald-900";
-
-    const dateStr = item.created_at ? new Date(item.created_at).toLocaleDateString("en-IN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Recent";
-
-    card.innerHTML = `
-      <div class="flex items-start gap-3 min-w-0 flex-1">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-display font-bold text-sm ${badgeColor}">
-          ${Math.round(item.risk_score)}
-        </div>
-        <div class="flex flex-col min-w-0 flex-1">
-          <div class="flex items-center gap-2 mb-1 flex-wrap">
-            <span class="text-xs font-bold text-on-surface">${escapeHtml(item.category_title || item.scam_category)}</span>
-            <span class="text-[10px] uppercase tracking-wider px-2 py-0.2 rounded-full font-bold ${badgeColor}">${escapeHtml(item.risk_level)}</span>
-            <span class="text-xs text-on-surface-variant font-code">• ${dateStr}</span>
-          </div>
-          <p class="text-xs text-on-surface-variant truncate pr-2">"${escapeHtml(item.snippet)}"</p>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-        <button onclick="viewHistoryDetail('${escapeHtml(item.id)}')" class="px-3.5 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-primary font-bold text-xs transition-all">
-          View Detail
-        </button>
-        <button onclick="deleteHistoryItem('${escapeHtml(item.id)}')" class="p-1.5 rounded-full text-on-surface-variant hover:text-error hover:bg-surface-container transition-colors" title="Delete record">
-          <span class="material-symbols-outlined text-[18px]">delete</span>
-        </button>
-      </div>
-    `;
-
-    container.appendChild(card);
-  });
+  container.innerHTML = items
+    .map((item) => {
+      const score = Math.round(item.risk_score);
+      const verdict = score >= 60 ? "SCAM" : score >= 30 ? "SUSPICIOUS" : "SAFE";
+      const style = VERDICT_STYLES[verdict];
+      return `
+        <tr class="hover:bg-surface-container-low">
+          <td class="text-on-surface-variant whitespace-nowrap">${escapeHtml(formatDateTime(item.created_at))}</td>
+          <td><span class="${style.tag}">${style.word}</span></td>
+          <td class="max-w-0 w-full">
+            <div class="text-on-surface truncate">${escapeHtml(item.snippet)}</div>
+            <div class="text-xs text-on-surface-variant truncate">${escapeHtml(verdict === "SAFE" ? "No scam pattern" : item.category_title || item.scam_category)}</div>
+          </td>
+          <td class="text-right font-semibold ${style.text}">${score}</td>
+          <td class="text-right whitespace-nowrap">
+            <button onclick="viewHistoryDetail('${escapeHtml(item.id)}')" class="btn-ghost text-primary">Open</button>
+            <button onclick="deleteHistoryItem('${escapeHtml(item.id)}')" class="btn-ghost" title="Delete"><span class="material-symbols-outlined text-[18px]">delete</span></button>
+          </td>
+        </tr>`;
+    })
+    .join("");
 }
 
 async function viewHistoryDetail(analysisId) {
@@ -675,13 +685,7 @@ function setHistoryRiskFilter(filter) {
   ["all", "high", "medium", "low"].forEach((f) => {
     const btn = document.getElementById(`filter-${f}`);
     if (btn) {
-      if (f === filter) {
-        btn.classList.add("bg-surface-container-lowest", "text-primary", "shadow-sm", "font-bold");
-        btn.classList.remove("text-on-surface-variant");
-      } else {
-        btn.classList.remove("bg-surface-container-lowest", "text-primary", "shadow-sm", "font-bold");
-        btn.classList.add("text-on-surface-variant");
-      }
+      btn.classList.toggle("seg-active", f === filter);
     }
   });
   loadHistoryData();
@@ -755,46 +759,34 @@ function showHighlightReason(index) {
 // Link X-ray
 // ---------------------------------------------------------------------------
 const XRAY_STYLES = {
-  danger: { chip: "bg-error text-on-error", label: "DANGEROUS", icon: "dangerous", border: "border-error/40" },
-  caution: { chip: "bg-amber-400 text-amber-950", label: "CAUTION", icon: "warning", border: "border-amber-400/60" },
-  unknown: { chip: "bg-surface-container-high text-on-surface-variant", label: "UNVERIFIED", icon: "help", border: "border-outline-variant/40" },
-  safe: { chip: "bg-emerald-600 text-white", label: "OFFICIAL", icon: "verified", border: "border-emerald-400/60" },
+  danger: { tag: "tag tag-negative", label: "Dangerous" },
+  caution: { tag: "tag tag-critical", label: "Caution" },
+  unknown: { tag: "tag tag-neutral", label: "Unverified" },
+  safe: { tag: "tag tag-positive", label: "Official" },
 };
 const FLAG_ICON = { high: "error", medium: "warning", low: "info", good: "check_circle", info: "info" };
 const FLAG_COLOR = { high: "text-error", medium: "text-amber-600", low: "text-sky-700", good: "text-emerald-600", info: "text-on-surface-variant" };
 
 function renderLinkXray(reports) {
   const section = document.getElementById("result-link-xray-section");
-  const list = document.getElementById("result-link-xray-list");
-  list.innerHTML = "";
+  const body = document.getElementById("result-link-xray-list");
   section.classList.toggle("hidden", reports.length === 0);
-
-  reports.forEach((r) => {
-    const s = XRAY_STYLES[r.risk] || XRAY_STYLES.unknown;
-    const flags = r.flags.length
-      ? r.flags.map((f) => `
-          <li class="flex items-start gap-2">
-            <span class="material-symbols-outlined text-[16px] ${FLAG_COLOR[f.severity] || ""} shrink-0 mt-0.5">${FLAG_ICON[f.severity] || "info"}</span>
-            <span><strong class="text-on-surface">${escapeHtml(f.title)}.</strong> ${escapeHtml(f.detail)}</span>
-          </li>`).join("")
-      : `<li class="text-on-surface-variant">No known tricks found, but this is not a recognised official domain. Open the organisation's app or type its address yourself.</li>`;
-    const card = document.createElement("div");
-    card.className = `p-4 rounded-xl bg-surface-container-low border ${s.border}`;
-    card.innerHTML = `
-      <div class="flex items-start justify-between gap-3 mb-2">
-        <div class="min-w-0">
-          <div class="text-[11px] uppercase tracking-wider font-bold text-on-surface-variant">Really goes to</div>
-          <div class="font-code text-sm font-bold text-on-surface break-all">${escapeHtml(r.real_domain)}</div>
-          ${r.looks_like ? `<div class="text-[11px] text-error font-semibold mt-0.5">Made to look like: ${escapeHtml(r.looks_like)}</div>` : ""}
-        </div>
-        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider flex items-center gap-1 shrink-0 ${s.chip}">
-          <span class="material-symbols-outlined text-[14px]">${s.icon}</span>${s.label}
-        </span>
-      </div>
-      <div class="text-[11px] text-on-surface-variant font-code break-all mb-3">${escapeHtml(r.link)}</div>
-      <ul class="space-y-1.5 text-xs text-on-surface-variant">${flags}</ul>`;
-    list.appendChild(card);
-  });
+  body.innerHTML = reports
+    .map((r) => {
+      const s = XRAY_STYLES[r.risk] || XRAY_STYLES.unknown;
+      const issues = r.flags.filter((f) => f.severity !== "good");
+      const list = issues.length
+        ? `<ul class="space-y-1">${issues.map((f) => `<li title="${escapeHtml(f.detail)}"><span class="${FLAG_COLOR[f.severity] || ""} font-semibold">${escapeHtml(f.title)}.</span> <span class="text-on-surface-variant">${escapeHtml(f.detail)}</span></li>`).join("")}</ul>`
+        : `<span class="text-on-surface-variant">${r.risk === "safe" ? "Official domain" : "No known tricks; not a recognised official domain"}</span>`;
+      return `
+        <tr>
+          <td class="font-code text-xs break-all text-on-surface-variant max-w-[14rem]">${escapeHtml(r.link)}</td>
+          <td class="font-semibold text-on-surface break-all">${escapeHtml(r.real_domain)}${r.looks_like ? `<div class="text-xs font-normal text-error">Imitates ${escapeHtml(r.looks_like)}</div>` : ""}</td>
+          <td><span class="${s.tag}">${s.label}</span></td>
+          <td class="text-xs leading-relaxed">${list}</td>
+        </tr>`;
+    })
+    .join("");
 }
 
 // ---------------------------------------------------------------------------
@@ -828,9 +820,9 @@ function warnFamilyOnWhatsApp() {
 // Emergency: "I've been scammed"
 // ---------------------------------------------------------------------------
 const PRIORITY_STYLES = {
-  now: { chip: "bg-error text-on-error", label: "DO NOW" },
-  today: { chip: "bg-amber-400 text-amber-950", label: "TODAY" },
-  later: { chip: "bg-surface-container-high text-on-surface-variant", label: "NEXT DAYS" },
+  now: { chip: "tag tag-negative", label: "Do now" },
+  today: { chip: "tag tag-critical", label: "Today" },
+  later: { chip: "tag tag-neutral", label: "Next days" },
 };
 
 function emergencyProgressKey(incident) {
@@ -874,8 +866,8 @@ function renderEmergencyGuide() {
 
   document.getElementById("emergency-incident-chips").innerHTML = Object.entries(guide.incident_types)
     .map(([key, label]) => `
-      <button onclick="loadEmergencyGuide('${escapeHtml(key)}')" class="px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-        key === guide.incident_type ? "bg-error text-on-error border-error" : "bg-surface-container-lowest text-on-surface border-outline-variant/40 hover:bg-surface-container"
+      <button onclick="loadEmergencyGuide('${escapeHtml(key)}')" class="px-3 py-1.5 rounded-md text-xs font-semibold border transition-all ${
+ key === guide.incident_type ? "bg-error text-on-error border-error" : "bg-surface-container-lowest text-on-surface border-outline-variant/40 hover:bg-surface-container"
       }">${escapeHtml(label)}</button>`)
     .join("");
 
@@ -884,15 +876,15 @@ function renderEmergencyGuide() {
       const p = PRIORITY_STYLES[step.priority] || PRIORITY_STYLES.later;
       const checked = done.has(step.title);
       const action = step.action
-        ? `<a href="${escapeHtml(step.action.href)}" ${step.action.href.startsWith("http") ? 'target="_blank" rel="noopener"' : ""} class="inline-flex items-center gap-1 mt-2 px-3 py-1 rounded-full bg-primary text-on-primary text-[11px] font-bold"><span class="material-symbols-outlined text-[14px]">${step.action.href.startsWith("tel:") ? "call" : "open_in_new"}</span>${escapeHtml(step.action.label)}</a>`
+        ? `<a href="${escapeHtml(step.action.href)}" ${step.action.href.startsWith("http") ? 'target="_blank" rel="noopener"' : ""} class="inline-flex items-center gap-1 mt-2 px-3 py-1 rounded-md bg-primary text-on-primary text-[11px] font-semibold"><span class="material-symbols-outlined text-[14px]">${step.action.href.startsWith("tel:") ? "call" : "open_in_new"}</span>${escapeHtml(step.action.label)}</a>`
         : "";
       return `
         <label class="flex items-start gap-3 p-3 rounded-lg border ${checked ? "bg-emerald-50 border-emerald-300" : "bg-surface-container-low border-surface-container"} cursor-pointer">
           <input type="checkbox" ${checked ? "checked" : ""} onchange="toggleEmergencyStep(${i}, this.checked)" class="mt-1 w-4 h-4 accent-emerald-600 shrink-0"/>
           <span class="flex-1 min-w-0">
             <span class="flex items-center gap-2 flex-wrap">
-              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${p.chip}">${p.label}</span>
-              <span class="text-sm font-bold text-on-surface ${checked ? "line-through opacity-60" : ""}">${escapeHtml(step.title)}</span>
+              <span class="${p.chip}">${p.label}</span>
+              <span class="text-sm font-semibold text-on-surface ${checked ? "line-through opacity-60" : ""}">${escapeHtml(step.title)}</span>
             </span>
             <span class="block text-xs text-on-surface-variant mt-1 leading-relaxed">${escapeHtml(step.detail)}</span>
             ${action}
@@ -1016,16 +1008,16 @@ async function lookupIdentifier() {
     const s = LOOKUP_STYLES[r.status] || LOOKUP_STYLES.no_reports;
     const labels = Object.fromEntries(REPORT_CATEGORIES);
     const cats = Object.entries(r.categories || {})
-      .map(([c, n]) => `<span class="px-2 py-0.5 rounded-full bg-surface-container-lowest/70 text-[11px] font-semibold">${escapeHtml(labels[c] || c)} &times; ${n}</span>`)
+      .map(([c, n]) => `<span class="px-2 py-0.5 rounded-md bg-surface-container-lowest/70 text-[11px] font-semibold">${escapeHtml(labels[c] || c)} &times; ${n}</span>`)
       .join(" ");
     const last = r.last_reported ? new Date(r.last_reported).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : null;
     out.innerHTML = `
-      <div class="p-4 rounded-xl border ${s.box}">
+      <div class="p-4 rounded-lg border ${s.box}">
         <div class="flex items-center justify-between gap-2 flex-wrap">
-          <div class="flex items-center gap-2 font-bold text-sm"><span class="material-symbols-outlined text-[22px]">${s.icon}</span>${s.title}</div>
+          <div class="flex items-center gap-2 font-semibold text-sm"><span class="material-symbols-outlined text-[22px]">${s.icon}</span>${s.title}</div>
           <span class="font-code text-xs font-semibold">${escapeHtml(r.identifier_type.toUpperCase())}: ${escapeHtml(r.identifier)}</span>
         </div>
-        ${r.report_count ? `<div class="text-2xl font-extrabold mt-2">${r.report_count} report${r.report_count === 1 ? "" : "s"}</div>` : ""}
+        ${r.report_count ? `<div class="text-2xl font-semibold mt-2">${r.report_count} report${r.report_count === 1 ? "" : "s"}</div>` : ""}
         <p class="text-xs mt-1 leading-relaxed">${escapeHtml(r.advice)}</p>
         ${cats ? `<div class="flex flex-wrap gap-1.5 mt-2">${cats}</div>` : ""}
         ${last ? `<div class="text-[11px] opacity-80 mt-2">Last reported ${escapeHtml(last)}</div>` : ""}
@@ -1089,9 +1081,9 @@ async function reportFromCurrentAnalysis() {
 // Spot-the-Scam Quiz
 // ---------------------------------------------------------------------------
 const QUIZ_CHOICES = [
-  { verdict: "SAFE", style: "bg-emerald-600 hover:bg-emerald-700 text-white", icon: "verified_user" },
-  { verdict: "SUSPICIOUS", style: "bg-amber-400 hover:bg-amber-500 text-amber-950", icon: "gpp_maybe" },
-  { verdict: "SCAM", style: "bg-error hover:bg-red-700 text-on-error", icon: "dangerous" },
+  { verdict: "SAFE", style: "border border-outline-variant bg-surface-container-lowest hover:border-tertiary hover:bg-tertiary-container text-tertiary", icon: "verified_user" },
+  { verdict: "SUSPICIOUS", style: "border border-outline-variant bg-surface-container-lowest hover:border-amber-500 hover:bg-amber-50 text-amber-700", icon: "gpp_maybe" },
+  { verdict: "SCAM", style: "border border-outline-variant bg-surface-container-lowest hover:border-error hover:bg-error-container text-error", icon: "dangerous" },
 ];
 
 async function startQuiz() {
@@ -1116,15 +1108,15 @@ function renderQuizQuestion() {
   document.getElementById("quiz-score").textContent = `Score ${state.quiz.score}`;
   document.getElementById("quiz-card").innerHTML = `
     <div class="flex items-center gap-2 mb-3 text-xs">
-      <span class="px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant font-bold">${escapeHtml(q.channel)}</span>
+      <span class="px-2.5 py-1 rounded-md bg-surface-container text-on-surface-variant font-semibold">${escapeHtml(q.channel)}</span>
       <span class="text-on-surface-variant">From:</span>
       <span class="font-code font-semibold text-on-surface break-all">${escapeHtml(q.sender)}</span>
     </div>
-    <div id="quiz-message" class="p-4 rounded-2xl rounded-tl-sm bg-surface-container-low border border-surface-container text-sm text-on-surface leading-loose mb-6 whitespace-pre-line">${escapeHtml(q.message)}</div>
-    <div class="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Your call</div>
+    <div id="quiz-message" class="p-4 rounded-lg rounded-tl-sm bg-surface-container-low border border-outline-variant text-sm text-on-surface leading-loose mb-6 whitespace-pre-line">${escapeHtml(q.message)}</div>
+    <div class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-2">Your call</div>
     <div class="grid grid-cols-3 gap-2 sm:gap-3">
       ${QUIZ_CHOICES.map((c) => `
-        <button onclick="answerQuiz('${c.verdict}')" class="quiz-choice px-3 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm transition-all ${c.style}">
+        <button onclick="answerQuiz('${c.verdict}')" class="quiz-choice px-3 py-3 rounded-lg font-semibold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all ${c.style}">
           <span class="material-symbols-outlined text-[18px]">${c.icon}</span>${c.verdict}
         </button>`).join("")}
     </div>
@@ -1151,11 +1143,11 @@ async function answerQuiz(guess) {
 
     const last = state.quiz.index >= state.quiz.questions.length - 1;
     const flags = r.red_flags.length
-      ? `<div class="flex flex-wrap gap-1.5 mt-3">${r.red_flags.map((f) => `<span class="px-2 py-0.5 rounded-full bg-error-container text-on-error-container text-[11px] font-semibold">${escapeHtml(f)}</span>`).join("")}</div>`
+      ? `<div class="flex flex-wrap gap-1.5 mt-3">${r.red_flags.map((f) => `<span class="px-2 py-0.5 rounded-md bg-error-container text-on-error-container text-[11px] font-semibold">${escapeHtml(f)}</span>`).join("")}</div>`
       : "";
     document.getElementById("quiz-feedback").innerHTML = `
-      <div class="mt-6 p-4 rounded-xl border ${r.correct ? "bg-emerald-50 border-emerald-300" : "bg-error-container border-error/30"}">
-        <div class="flex items-center gap-2 font-bold text-sm ${r.correct ? "text-emerald-800" : "text-on-error-container"}">
+      <div class="mt-6 p-4 rounded-lg border ${r.correct ? "bg-emerald-50 border-emerald-300" : "bg-error-container border-error/30"}">
+        <div class="flex items-center gap-2 font-semibold text-sm ${r.correct ? "text-emerald-800" : "text-on-error-container"}">
           <span class="material-symbols-outlined text-[20px]">${r.correct ? "celebration" : "school"}</span>
           ${r.correct ? "Correct!" : `Not quite. You said ${escapeHtml(r.guess)}.`}
         </div>
@@ -1164,7 +1156,7 @@ async function answerQuiz(guess) {
         ${flags}
       </div>
       <div class="flex justify-end mt-4">
-        <button onclick="${last ? "finishQuiz()" : "nextQuizQuestion()"}" class="px-5 py-2 rounded-full bg-primary text-on-primary hover:bg-primary-container text-xs font-bold flex items-center gap-1.5 shadow-sm">
+        <button onclick="${last ? "finishQuiz()" : "nextQuizQuestion()"}" class="px-5 py-2 rounded-md bg-primary text-on-primary hover:bg-primary-container text-xs font-semibold flex items-center gap-1.5 ">
           ${last ? "See my score" : "Next message"}<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
         </button>
       </div>`;
@@ -1187,9 +1179,9 @@ function finishQuiz() {
   document.getElementById("quiz-card").innerHTML = `
     <div class="text-center py-6">
       <span class="material-symbols-outlined text-[48px] text-primary">emoji_events</span>
-      <div class="font-headline text-4xl font-extrabold text-on-surface mt-2">${score} / ${total}</div>
+      <div class="font-headline text-4xl font-semibold text-on-surface mt-2">${score} / ${total}</div>
       <p class="text-sm text-on-surface-variant mt-2">${verdict}</p>
-      <button onclick="startQuiz()" class="mt-6 px-5 py-2 rounded-full bg-primary text-on-primary hover:bg-primary-container text-xs font-bold inline-flex items-center gap-1.5 shadow-sm">
+      <button onclick="startQuiz()" class="mt-6 px-5 py-2 rounded-md bg-primary text-on-primary hover:bg-primary-container text-xs font-semibold inline-flex items-center gap-1.5 ">
         <span class="material-symbols-outlined text-[16px]">replay</span>Play again
       </button>
     </div>`;

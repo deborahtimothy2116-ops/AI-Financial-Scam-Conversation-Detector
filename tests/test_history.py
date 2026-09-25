@@ -164,3 +164,16 @@ def test_cross_user_history_isolation(client: TestClient):
     assert hist_b.status_code == 200
     assert hist_b.json()["data"]["meta"]["total"] == 0
 
+
+
+def test_history_filter_uses_verdict_bands(client: TestClient, auth_headers):
+    """'high' must include CRITICAL scans and 'low' must include SAFE ones."""
+    critical = "Share your OTP now and install AnyDesk. Your account will be blocked, pay Rs 5000 fee immediately."
+    safe = "See you at lunch tomorrow."
+    for message in (critical, safe):
+        client.post("/api/v1/analyze/message", json={"message": message}, headers=auth_headers)
+
+    high = client.get("/api/v1/history", params={"risk_level": "high"}, headers=auth_headers).json()["data"]["items"]
+    low = client.get("/api/v1/history", params={"risk_level": "low"}, headers=auth_headers).json()["data"]["items"]
+    assert [i["risk_level"] for i in high] == ["CRITICAL"]
+    assert len(low) == 1 and low[0]["risk_score"] < 30

@@ -27,16 +27,16 @@ ScamShield AI provides real-time, explainable fraud intelligence:
 
 ## 🖥️ Using the App
 
-The web app (served at `/`) is built around one question: **"Is this message a scam?"**
+The web app (served at `/`) uses a clean enterprise layout: a dark top bar, a left navigation sidebar (a tab bar on phones), white panels, data tables and colour used only for status (red = scam, orange = suspicious, green = safe).
 
-- **Scan** (home): paste a message or switch to *Upload screenshot*, then press **Scan now**, or try one of the example chips. A scanner window sweeps a beam over your message or screenshot while it ticks off each check (links, OTP/money requests, sender claims, community reports). When it finishes, the red flags light up on the message itself.
-- **Result**: a big **SAFE / SUSPICIOUS / SCAM** verdict with the risk score, then *What we found in the message* (highlighted), *Why* (one plain list of warning signs), *Where the links really go* (Link X-ray), and *What to do now*. Risky results add **Already paid? Get help now**, **Warn family on WhatsApp** and **Report scammer's number / UPI**.
-- **Check UPI**: look up a phone number, UPI ID, website or email before paying, and report scammers.
-- **Quiz**: practise spotting scams.
-- **History**: your past scans (when logged in).
-- **Scammed?** (red button): emergency action plan and complaint draft.
+- **Scan a message**: paste a message (or switch to the *Screenshot* tab) and press **Scan**. A scanner window sweeps a beam over the message or screenshot while each check is ticked off; when it finishes, the warning signs light up on the text.
+- **Scan result**: a record page with the verdict tag and four key figures (verdict, risk score, warning signs, links checked), the message with highlights, a **Findings** table (severity + explanation), a **Link analysis** table (real destination, status, tricks used), **Recommended actions** and the classification. Risky results offer **I already paid**, **Warn family** and **Report scammer**.
+- **Check number / UPI**: look up a phone number, UPI ID, website or email before paying, and report scammers.
+- **Incident response** (also the red **Report an incident** button): the action plan and complaint draft.
+- **Scan history**: a filterable table of your scans (when signed in).
+- **Awareness training**: the spot-the-scam quiz.
 
-On phones the tabs move to a bar under the header. The original Google Stitch screen exports are kept in `frontend_screens/` for design reference only; the app doesn't use them.
+The original Google Stitch screen exports are kept in `frontend_screens/` for design reference only; the app doesn't use them.
 
 ## 🏗️ Architecture & Clean Code Structure
 

@@ -152,7 +152,17 @@ class AnalysisRepository(BaseRepository[Analysis]):
         if scam_category:
             query = query.filter(Analysis.scam_category.ilike(f"%{scam_category}%"))
         if risk_level and risk_level.upper() != "ALL":
-            query = query.filter(Analysis.risk_level.ilike(f"%{risk_level}%"))
+            # Filter by the same score bands as the SAFE / SUSPICIOUS / SCAM verdict, so
+            # "high" includes CRITICAL and "low" includes SAFE.
+            band = risk_level.lower()
+            if band in ("high", "critical", "scam"):
+                query = query.filter(Analysis.risk_score >= 60.0)
+            elif band in ("medium", "suspicious"):
+                query = query.filter(Analysis.risk_score >= 30.0, Analysis.risk_score < 60.0)
+            elif band in ("low", "safe"):
+                query = query.filter(Analysis.risk_score < 30.0)
+            else:
+                query = query.filter(Analysis.risk_level.ilike(f"%{risk_level}%"))
         if is_scam is not None:
             query = query.filter(Analysis.is_scam == is_scam)
         if search_query and search_query.strip():
